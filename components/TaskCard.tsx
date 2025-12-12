@@ -80,6 +80,7 @@ export default function TaskCard({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
   const [transcript, setTranscript] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<string | number | null>(null);
   const [promptExpanded, setPromptExpanded] = useState(false);
   const [promptFading, setPromptFading] = useState(false);
   const promptFadeTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -103,12 +104,13 @@ export default function TaskCard({
   }, [task.taskType, task.id]);
 
   useEffect(() => {
-    if (recordingState !== "recording") return;
+    if (!isRecording) return;
+    setElapsedSeconds(0);
     const id = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(id);
-  }, [recordingState]);
+  }, [isRecording]);
 
   useEffect(() => {
     if (recordingState === "recording") {
@@ -388,7 +390,7 @@ export default function TaskCard({
           </button>
         )}
 
-        {isCompleted && (
+        {isCompleted && recordingState === "ready" && (
           <button
             type="button"
             onClick={() => {
@@ -424,7 +426,17 @@ export default function TaskCard({
                   setErrorMessage(null);
                   try {
                     setElapsedSeconds(0);
-                    await startRecording();
+                    setRecordingState("starting");
+                    const streamPromise = navigator.mediaDevices.getUserMedia({ audio: true });
+                    for (let i = 3; i >= 1; i--) {
+                      setCountdown(i);
+                      await new Promise((r) => setTimeout(r, 1000));
+                    }
+                    setCountdown("Speak!");
+                    const stream = await streamPromise;
+                    await new Promise((r) => setTimeout(r, 300));
+                    setCountdown(null);
+                    await startRecording(stream, true);
                     setRecordingState("recording");
                     setIsRetry((prev) => prev);
                   } catch (err) {
@@ -449,7 +461,7 @@ export default function TaskCard({
                 }}
               >
                 <Mic size={16} />
-                Start Recording
+                {countdown ? countdown : "Start Recording"}
               </button>
             )}
 

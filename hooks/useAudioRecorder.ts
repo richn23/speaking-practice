@@ -56,48 +56,55 @@ export function useAudioRecorder() {
     }
   }, []);
 
-  const startRecording = useCallback(async () => {
-    try {
-      setState((prev) => ({ ...prev, isStarting: true }));
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      mediaRecorderRef.current = recorder;
-      chunksRef.current = [];
-      startTimeRef.current = performance.now();
-
-      recorder.ondataavailable = (event: BlobEvent) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
+  const startRecording = useCallback(
+    async (providedStream?: MediaStream, skipInitDelay = false) => {
+      try {
+        setState((prev) => ({ ...prev, isStarting: true }));
+        const stream =
+          providedStream ?? (await navigator.mediaDevices.getUserMedia({ audio: true }));
+        if (!skipInitDelay) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
-      };
 
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
-        const recordedDurationSeconds = startTimeRef.current
-          ? Math.max(0, (performance.now() - startTimeRef.current) / 1000)
-          : 0;
-        setState({
-          isRecording: false,
-          isStarting: false,
-          audioBlob: blob,
-          audioUrl: url,
-          recordedDuration: recordedDurationSeconds,
-        });
+        const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        mediaRecorderRef.current = recorder;
         chunksRef.current = [];
-        stream.getTracks().forEach((track) => track.stop());
-        startTimeRef.current = null;
-      };
+        startTimeRef.current = performance.now();
 
-      recorder.start();
-      setState((prev) => ({ ...prev, isRecording: true, isStarting: false }));
-    } catch (error) {
-      console.error("Audio recording error:", error);
-      resetRecording();
-    }
-  }, [resetRecording]);
+        recorder.ondataavailable = (event: BlobEvent) => {
+          if (event.data.size > 0) {
+            chunksRef.current.push(event.data);
+          }
+        };
+
+        recorder.onstop = () => {
+          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          const url = URL.createObjectURL(blob);
+          const recordedDurationSeconds = startTimeRef.current
+            ? Math.max(0, (performance.now() - startTimeRef.current) / 1000)
+            : 0;
+          setState({
+            isRecording: false,
+            isStarting: false,
+            audioBlob: blob,
+            audioUrl: url,
+            recordedDuration: recordedDurationSeconds,
+          });
+          chunksRef.current = [];
+          stream.getTracks().forEach((track) => track.stop());
+          startTimeRef.current = null;
+        };
+
+        recorder.start();
+        setState((prev) => ({ ...prev, isRecording: true, isStarting: false }));
+      } catch (error) {
+        console.error("Audio recording error:", error);
+        resetRecording();
+        throw error;
+      }
+    },
+    [resetRecording]
+  );
 
   return {
     isRecording: state.isRecording,
