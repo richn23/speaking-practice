@@ -1,0 +1,31 @@
+:root {
+  --bg-deep: #0f0a18;
+  --bg-surface: rgba(20, 10, 30, 0.7);
+  --purple-dim: #4c1d95;
+  --purple-mid: #7c3aed;
+  --purple-bright: #a78bfa;
+  --text-primary: #e9e4f0;
+  --text-muted: #9f8fc0;
+  --success: #34d399;
+  --locked: #3f3f46;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
