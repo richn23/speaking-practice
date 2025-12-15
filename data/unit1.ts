@@ -12,6 +12,7 @@ export type Task = {
   title: string;
   instructions: string;
   prompt?: string;
+  imageUrl?: string;
   items?: TaskItem[];
   expectedMinSeconds: number;
   expectedMaxSeconds: number;
@@ -94,10 +95,19 @@ export const unit1: Unit = {
       unitId,
       orderIndex: 3,
       taskType: "long_talk",
-      title: "Long Talk 2",
+      title: "My Weekend Routine",
       instructions:
-        "Prompt stays visible. Speak for 30–60 seconds about your typical weekday. Mention morning, afternoon, and evening activities.",
-      expectedMinSeconds: 30,
+        "Speak for 45–60 seconds about your typical weekend. Mention morning, afternoon, and evening.",
+      prompt:
+        "Prompt ideas:\n" +
+        "• What time do you usually wake up, and what’s your first thing?\n" +
+        "• Meals or coffee: where, what, and with who?\n" +
+        "• Plans: errands, social time, family time, hobbies\n" +
+        "• Exercise or outdoors: gym, walk, padel, etc.\n" +
+        "• Evening routine: dinner, relaxing, screens/books, bedtime\n" +
+        "• One thing you always do + one thing that changes week to week\n" +
+        "Challenge: Try to use at least 3 connectors (e.g., usually, then, after that, because, so).",
+      expectedMinSeconds: 45,
       expectedMaxSeconds: 60,
       hasAudio: true,
       audioEnabled: true,
@@ -109,7 +119,8 @@ export const unit1: Unit = {
       taskType: "image",
       title: "Picture Description",
       instructions:
-        "Describe the picture in 4–6 sentences. Mention what you see, actions, and possible context. Audio instruction enabled.",
+        "Describe the picture in 4–6 sentences. Mention what you see, actions, and possible context.",
+      imageUrl: "/images/picture-description.png",
       expectedMinSeconds: 30,
       expectedMaxSeconds: 60,
       hasAudio: true,

@@ -250,6 +250,23 @@ export default function TaskCard({
 
       <div style={{ color: "#9f8fc0", lineHeight: 1.6 }}>{task.instructions}</div>
 
+      {task.imageUrl && (
+        <div
+          style={{
+            borderRadius: 10,
+            overflow: "hidden",
+            border: "1px solid rgba(124, 58, 237, 0.25)",
+            background: "rgba(124, 58, 237, 0.05)",
+          }}
+        >
+          <img
+            src={task.imageUrl}
+            alt={task.title}
+            style={{ width: "100%", display: "block" }}
+          />
+        </div>
+      )}
+
       {task.taskType === "long_talk" && task.prompt && (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <button
@@ -461,7 +478,11 @@ export default function TaskCard({
                 }}
               >
                 <Mic size={16} />
-                {countdown ? countdown : "Start Recording"}
+                {recordingState === "starting"
+                  ? countdown ?? "Starting..."
+                  : countdown
+                  ? countdown
+                  : "Start Recording"}
               </button>
             )}
 
@@ -582,6 +603,9 @@ export default function TaskCard({
                         body: JSON.stringify({
                           taskId: task.id,
                           taskType: task.taskType,
+                          taskTitle: task.title,
+                          taskInstructions: task.instructions,
+                          taskPrompt: task.prompt,
                           transcript: t,
                         }),
                       });
@@ -701,9 +725,9 @@ export default function TaskCard({
             justifyContent: "center",
             backdropFilter: "blur(2px)",
             pointerEvents: "none",
-            background: "rgba(0,0,0,0.35)",
+            background: "rgba(0,0,0,0.45)",
             borderRadius: 12,
-            zIndex: 50,
+            zIndex: 200,
           }}
         >
           <div
