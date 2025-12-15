@@ -123,6 +123,9 @@ export default function WaveformPlayer({ audioUrl, audioBlob }: WaveformPlayerPr
         display: "flex",
         flexDirection: "column",
         gap: "0.5rem",
+        width: "100%",
+        maxWidth: "100%",
+        overflow: "hidden",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -157,12 +160,15 @@ export default function WaveformPlayer({ audioUrl, audioBlob }: WaveformPlayerPr
         style={{
           display: "grid",
           gridAutoFlow: "column",
-          gridAutoColumns: "6px",
-          gap: "2px",
+          gridAutoColumns: "5px",
+          gap: "1.5px",
           alignItems: "end",
           height: 50,
           cursor: isReady ? "pointer" : "default",
           userSelect: "none",
+          width: "100%",
+          maxWidth: "100%",
+          overflow: "hidden",
         }}
       >
         {samples.map((v, idx) => {
@@ -174,7 +180,7 @@ export default function WaveformPlayer({ audioUrl, audioBlob }: WaveformPlayerPr
             <div
               key={idx}
               style={{
-                width: 4,
+                width: 3,
                 height: h,
                 borderRadius: "4px 4px 0 0",
                 background: played ? "#a78bfa" : "#3f3f46",

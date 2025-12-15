@@ -690,6 +690,39 @@ export default function TaskCard({
           }}
         />
       )}
+
+      {recordingState === "starting" && countdown && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(2px)",
+            pointerEvents: "none",
+            background: "rgba(0,0,0,0.35)",
+            borderRadius: 12,
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              padding: "0.75rem 1.25rem",
+              borderRadius: 12,
+              background: "rgba(20, 10, 30, 0.85)",
+              border: "1px solid rgba(124, 58, 237, 0.4)",
+              color: "#e9e4f0",
+              fontWeight: 800,
+              fontSize: countdown === "Speak!" ? "1.4rem" : "1.8rem",
+              letterSpacing: "0.05em",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+            }}
+          >
+            {countdown}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
