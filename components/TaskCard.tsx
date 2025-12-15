@@ -149,6 +149,11 @@ export default function TaskCard({
     setPromptFading(false);
   };
 
+  const startButtonLabel =
+    recordingState === "starting"
+      ? countdown ?? "Starting..."
+      : countdown ?? "Start Recording";
+
   useEffect(() => {
     if (!isRecording && recordedDuration) {
       setElapsedSeconds(Math.max(0, Math.round(recordedDuration)));
@@ -478,11 +483,7 @@ export default function TaskCard({
                 }}
               >
                 <Mic size={16} />
-                {recordingState === "starting"
-                  ? countdown ?? "Starting..."
-                  : countdown
-                  ? countdown
-                  : "Start Recording"}
+              {startButtonLabel}
               </button>
             )}
 
