@@ -40,7 +40,7 @@ Responses 1–4:
 invalidReason: "We couldn't hear you clearly. Please try again and speak for at least 15-20 seconds."
 
 Off-topic (5):
-invalidReason: "Your response was not on topic. Please try again and answer the prompt."
+invalidReason: "Audio was unclear or too short. Please try again and speak for at least 15-20 seconds."
 
 For any invalid response, return:
 {
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         vocabularyTip: null,
         stretchSuggestion: null,
         strength: null,
-        invalidReason: "Your response was not on topic. Please try again and answer the prompt.",
+        invalidReason: "Audio was unclear or too short. Please try again and speak for at least 15-20 seconds.",
       };
       return NextResponse.json({ feedback });
     }
