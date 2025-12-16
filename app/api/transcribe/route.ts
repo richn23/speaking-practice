@@ -42,7 +42,14 @@ async function detectSilenceEnergy(tempPath: string): Promise<SilenceCheckResult
   }
 
   return new Promise((resolve, reject) => {
-    const ff = spawn(ffmpegPath, [
+    const ffmpeg = ffmpegPath ?? undefined;
+    if (!ffmpeg) {
+      console.warn("[silence-gate] ffmpeg-static unavailable; skipping silence check");
+      return resolve(null);
+    }
+
+
+    const ff = spawn(ffmpeg, [
       "-i",
       tempPath,
       "-vn",
