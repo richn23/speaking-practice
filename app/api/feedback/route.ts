@@ -115,6 +115,68 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
     }
 
+    // Early guard for obvious hallucinations/off-topic boilerplate
+    const normalized = transcript.toLowerCase();
+    const hallucinationPhrases = [
+      "thank you for watching",
+      "thanks for watching",
+      "please subscribe",
+      "like and subscribe",
+      "see you next time",
+      "watching my video",
+    ];
+    const tooShort = transcript.trim().split(/\s+/).length < 10;
+    const matchedHallucination = hallucinationPhrases.some((p) => normalized.includes(p));
+    const repeatedHallucinationPattern = /we['’]re going to be able to do it/gi;
+    const repeatedHallucinationCount = (transcript.match(repeatedHallucinationPattern) || []).length;
+    const isRepetitiveNonsense = repeatedHallucinationCount >= 2;
+
+    if (tooShort || matchedHallucination || isRepetitiveNonsense) {
+      const feedback = {
+        scoreOverall: 0,
+        performanceLabel: "Try again",
+        scores: {
+          taskCompletion: 0,
+          elaboration: 0,
+          coherence: 0,
+          grammar: 0,
+          vocabulary: 0,
+        },
+        corrections: [],
+        vocabularyTip: null,
+        stretchSuggestion: null,
+        strength: null,
+        invalidReason: "Your response was not on topic. Please try again and answer the prompt.",
+      };
+      return NextResponse.json({ feedback });
+    }
+
+    // Simple off-topic / meta-speech heuristic before calling GPT
+    const normalizedTranscript = transcript.toLowerCase();
+    const offTopicSignals = ["feedback", "teacher", "class", "cheat", "cheating", "request", "previous teacher"];
+    const routineSignals = ["morning", "evening", "breakfast", "lunch", "dinner", "work", "school", "weekend", "routine", "day"];
+    const hasOffTopicSignal = offTopicSignals.some((w) => normalizedTranscript.includes(w));
+    const hasRoutineSignal = routineSignals.some((w) => normalizedTranscript.includes(w));
+    if (hasOffTopicSignal && !hasRoutineSignal) {
+      const feedback = {
+        scoreOverall: 0,
+        performanceLabel: "Try again",
+        scores: {
+          taskCompletion: 0,
+          elaboration: 0,
+          coherence: 0,
+          grammar: 0,
+          vocabulary: 0,
+        },
+        corrections: [],
+        vocabularyTip: null,
+        stretchSuggestion: null,
+        strength: null,
+        invalidReason: "Your response was not on topic. Please try again and answer the prompt.",
+      };
+      return NextResponse.json({ feedback });
+    }
+
     const userContent = `
 Task ID: ${taskId ?? "unknown"}
 Task Type: ${taskType ?? "unknown"}

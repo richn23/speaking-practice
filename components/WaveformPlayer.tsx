@@ -58,13 +58,12 @@ export default function WaveformPlayer({ audioUrl, audioBlob }: WaveformPlayerPr
       .finally(() => {
         if (isMounted) {
           setIsReady(true);
-          ctx.close();
         }
       });
 
     return () => {
       isMounted = false;
-      ctx.close();
+      ctx.close().catch(() => undefined);
     };
   }, [audioBlob]);
 
