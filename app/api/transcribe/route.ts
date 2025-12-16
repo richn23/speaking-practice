@@ -36,7 +36,10 @@ const MIN_DURATION_SEC = Number.isFinite(Number(process.env.VAD_MIN_DURATION_SEC
   : 0.8;
 
 async function detectSilenceEnergy(tempPath: string): Promise<SilenceCheckResult | null> {
-  if (!ffmpegPath) return null;
+  if (!ffmpegPath) {
+    console.warn("[silence-gate] ffmpeg-static unavailable; skipping silence check");
+    return null;
+  }
 
   return new Promise((resolve, reject) => {
     const ff = spawn(ffmpegPath, [
