@@ -1,22 +1,18 @@
-import { createSupabaseBrowserClient } from "./supabase-browser";
-
 export async function uploadAudio(blob: Blob, taskId: string): Promise<string | null> {
-  const supabase = createSupabaseBrowserClient();
-  const fileName = `${taskId}-${Date.now()}.webm`;
+  const formData = new FormData();
+  formData.append("audio", blob, "recording.webm");
+  formData.append("taskId", taskId);
 
-  const { data, error } = await supabase.storage.from("audio").upload(fileName, blob, {
-    contentType: "audio/webm",
+  const res = await fetch("/api/upload-audio", {
+    method: "POST",
+    body: formData,
   });
 
-  if (error) {
-    console.error("Upload error:", error);
+  if (!res.ok) {
+    console.error("Upload error:", await res.text());
     return null;
   }
 
-  return data.path;
+  const json = await res.json();
+  return json.path ?? null;
 }
-
-
-
-
-
