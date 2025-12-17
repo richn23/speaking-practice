@@ -8,7 +8,7 @@ export default function LoginPage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#08080c",
+        background: "transparent",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

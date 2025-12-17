@@ -74,14 +74,14 @@ export default function HomePage() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#08080c",
+        background: "transparent",
         display: "flex",
         flexDirection: "column",
         position: "relative",
         overflow: "hidden",
       }}
     >
-      <MatrixBackground colorScheme="grey" />
+      <MatrixBackground colorScheme="grey" speedScale={0.7} />
       <header
         style={{
           position: "relative",
@@ -93,7 +93,9 @@ export default function HomePage() {
           color: "#e5e7eb",
         }}
       >
-        <div style={{ fontSize: "1.1rem" }}>Hi, {firstName}!</div>
+        <div style={{ fontSize: "1.1rem", fontFamily: "var(--font-heading, 'Orbitron', sans-serif)" }}>
+          Hi, {firstName}!
+        </div>
         <button
           onClick={handleLogout}
           style={{
@@ -103,6 +105,7 @@ export default function HomePage() {
             borderRadius: 10,
             padding: "0.6rem 1.1rem",
             fontWeight: 600,
+            fontFamily: "var(--font-body, 'Exo 2', sans-serif)",
             cursor: "pointer",
             transition: "filter 0.2s ease",
           }}

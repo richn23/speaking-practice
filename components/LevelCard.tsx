@@ -59,16 +59,32 @@ export default function LevelCard({ level, highlight, onClick }: Props) {
             background: level.color,
             color: "#0b0b0f",
             fontWeight: 700,
+            fontFamily: "var(--font-heading, 'Orbitron', sans-serif)",
           }}
         >
           {level.cefr}
         </span>
         {isLocked && <span style={{ fontSize: "0.9rem", color: "#cbd5e1" }}>🔒 Coming Soon</span>}
       </div>
-      <div style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.35rem", fontFamily: "var(--font-heading, 'Orbitron')" }}>
+      <div
+        style={{
+          fontSize: "1.25rem",
+          fontWeight: 700,
+          marginBottom: "0.35rem",
+          fontFamily: "var(--font-heading, 'Orbitron', sans-serif)",
+        }}
+      >
         {level.name}
       </div>
-      <div style={{ fontSize: "1rem", color: "#d1d5db" }}>{isLocked ? "Coming Soon" : "Start"}</div>
+      <div
+        style={{
+          fontSize: "1rem",
+          color: "#d1d5db",
+          fontFamily: "var(--font-body, 'Exo 2', sans-serif)",
+        }}
+      >
+        {isLocked ? "Coming Soon" : "Start"}
+      </div>
     </div>
   );
 }

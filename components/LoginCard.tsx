@@ -137,10 +137,19 @@ export default function LoginCard() {
       <div style={cardStyle}>
         {/* Sign In */}
         <div style={faceStyle}>
-          <h2 style={{ fontSize: "1.6rem", fontWeight: 700, marginBottom: "1rem" }}>Welcome Back</h2>
+          <h2
+            style={{
+              fontSize: "1.6rem",
+              fontWeight: 700,
+              marginBottom: "1rem",
+              fontFamily: "var(--font-heading, 'Orbitron', sans-serif)",
+            }}
+          >
+            Welcome Back
+          </h2>
           <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="email"
@@ -150,7 +159,7 @@ export default function LoginCard() {
               required
             />
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="password"
@@ -162,13 +171,17 @@ export default function LoginCard() {
             {error && mode === "signin" && (
               <div style={{ color: "#f87171", fontSize: "0.9rem", marginTop: "-0.25rem" }}>{error}</div>
             )}
-            <button type="submit" disabled={loading} style={buttonStyle}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ ...buttonStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
+            >
               {loading && mode === "signin" ? "Signing in..." : "Sign In"}
             </button>
           </form>
           <div style={{ marginTop: "1rem" }}>
             <span style={subtleText}>New here? </span>
-            <span onClick={flip} style={linkStyle}>
+            <span onClick={flip} style={{ ...linkStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}>
               Create an account
             </span>
           </div>
@@ -176,10 +189,19 @@ export default function LoginCard() {
 
         {/* Sign Up */}
         <div style={{ ...faceStyle, transform: "rotateY(180deg)" }}>
-          <h2 style={{ fontSize: "1.6rem", fontWeight: 700, marginBottom: "1rem" }}>Create Account</h2>
+          <h2
+            style={{
+              fontSize: "1.6rem",
+              fontWeight: 700,
+              marginBottom: "1rem",
+              fontFamily: "var(--font-heading, 'Orbitron', sans-serif)",
+            }}
+          >
+            Create Account
+          </h2>
           <form onSubmit={handleSignUp} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="text"
@@ -189,7 +211,7 @@ export default function LoginCard() {
               required
             />
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="text"
@@ -199,7 +221,7 @@ export default function LoginCard() {
               required
             />
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="email"
@@ -209,7 +231,7 @@ export default function LoginCard() {
               required
             />
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="password"
@@ -219,7 +241,7 @@ export default function LoginCard() {
               required
             />
             <input
-              style={inputStyle}
+              style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
               type="password"
@@ -231,13 +253,17 @@ export default function LoginCard() {
             {error && mode === "signup" && (
               <div style={{ color: "#f87171", fontSize: "0.9rem", marginTop: "-0.25rem" }}>{error}</div>
             )}
-            <button type="submit" disabled={loading} style={buttonStyle}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ ...buttonStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
+            >
               {loading && mode === "signup" ? "Creating..." : "Create Account"}
             </button>
           </form>
           <div style={{ marginTop: "1rem" }}>
             <span style={subtleText}>Already have an account? </span>
-            <span onClick={flip} style={linkStyle}>
+            <span onClick={flip} style={{ ...linkStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}>
               Sign in
             </span>
           </div>

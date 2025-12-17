@@ -10,6 +10,7 @@ type Column = {
   trailLength: number;
   active: boolean;
   chars: string[];
+  alphaBase: number;
 };
 
 const symbols = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzəʃʒθðæŋɪʊɔɑ";
@@ -19,7 +20,6 @@ const maxSpeed = 60;
 const fontSize = 14;
 const minTrail = 15;
 const maxTrail = 30;
-const activeRatio = { min: 0.7, max: 0.8 };
 const headAlpha = 1;
 const minTrailAlpha = 0.3;
 
@@ -41,9 +41,10 @@ function hexToRgba(hex: string, alpha: number) {
 
 type MatrixBackgroundProps = {
   colorScheme?: "purple" | "grey";
+  speedScale?: number;
 };
 
-export default function MatrixBackground({ colorScheme = "purple" }: MatrixBackgroundProps) {
+export default function MatrixBackground({ colorScheme = "purple", speedScale = 1 }: MatrixBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const columnsRef = useRef<Column[]>([]);
   const frameRef = useRef<number | null>(null);
@@ -57,11 +58,16 @@ export default function MatrixBackground({ colorScheme = "purple" }: MatrixBackg
 
     const bgColor = getCssColor("--bg-deep", "#0f0a18");
     const headColor =
-      colorScheme === "grey" ? "#d0d0d0" : getCssColor("--purple-bright", "#a78bfa");
+      colorScheme === "grey" ? "#a0a0a0" : getCssColor("--purple-bright", "#a78bfa");
     const trailColor =
-      colorScheme === "grey" ? "#a0a0a0" : getCssColor("--purple-dim", "#4c1d95");
+      colorScheme === "grey" ? "#707070" : getCssColor("--purple-dim", "#4c1d95");
+    const trailDarkColor = colorScheme === "grey" ? "#404040" : trailColor;
+    const activeRatio = colorScheme === "grey" ? { min: 0.25, max: 0.3 } : { min: 0.7, max: 0.8 };
 
     const initColumns = () => {
+      const minSpeedScaled = minSpeed * speedScale;
+      const maxSpeedScaled = maxSpeed * speedScale;
+
       const { innerWidth, innerHeight } = window;
       canvas.style.width = `${innerWidth}px`;
       canvas.style.height = `${innerHeight}px`;
@@ -75,11 +81,12 @@ export default function MatrixBackground({ colorScheme = "purple" }: MatrixBackg
       columnsRef.current = Array.from({ length: totalColumns }).map((_, i) => ({
         x: i * columnWidth,
         headY: -Math.random() * innerHeight,
-        speed: Math.random() * (maxSpeed - minSpeed) + minSpeed,
+        speed: Math.random() * (maxSpeedScaled - minSpeedScaled) + minSpeedScaled,
         trailLength:
           Math.floor(Math.random() * (maxTrail - minTrail + 1)) + minTrail,
         active: Math.random() < (activeRatio.min + activeRatio.max) / 2,
         chars: [],
+        alphaBase: Math.random() * 0.4 + 0.1, // 0.1–0.5 for opacity variation
       }));
 
       // initialize chars to match trailLength
@@ -87,6 +94,7 @@ export default function MatrixBackground({ colorScheme = "purple" }: MatrixBackg
         col.chars = Array.from({ length: col.trailLength }).map(
           () => symbols[Math.floor(Math.random() * symbols.length)] ?? "A",
         );
+        col.alphaBase = Math.random() * 0.4 + 0.1;
       });
 
       lastTimeRef.current = performance.now();
@@ -148,20 +156,34 @@ export default function MatrixBackground({ colorScheme = "purple" }: MatrixBackg
           if (y < -fontSize || y > innerHeight) continue;
 
           const char = col.chars[i] ?? "A";
+          const baseTrailAlpha = colorScheme === "grey" ? col.alphaBase : minTrailAlpha;
+          const headAlphaLocal =
+            colorScheme === "grey" ? Math.min(0.8, col.alphaBase + 0.3) : headAlpha;
+          let alpha =
+            baseTrailAlpha + (headAlphaLocal - baseTrailAlpha) * Math.max(0, 1 - i / trailLen);
+
+          // fade out near bottom
+          if (y > innerHeight - 100) {
+            const fade = Math.max(0, 1 - (y - (innerHeight - 100)) / 100);
+            alpha *= fade;
+          }
+
           if (i === 0) {
-            ctx.fillStyle = hexToRgba(headColor, headAlpha);
+            ctx.fillStyle = hexToRgba(headColor, alpha);
           } else {
-            const alpha =
-              minTrailAlpha +
-              (headAlpha - minTrailAlpha) * Math.max(0, 1 - i / trailLen);
-            ctx.fillStyle = hexToRgba(trailColor, alpha);
+            ctx.fillStyle =
+              colorScheme === "grey"
+                ? hexToRgba(trailDarkColor, alpha)
+                : hexToRgba(trailColor, alpha);
           }
           ctx.fillText(char, col.x, y);
         }
 
         if (col.headY - trailLen * fontSize > innerHeight) {
           col.headY = -Math.random() * innerHeight * 0.5;
-          col.speed = Math.random() * (maxSpeed - minSpeed) + minSpeed;
+          const minSpeedScaled = minSpeed * speedScale;
+          const maxSpeedScaled = maxSpeed * speedScale;
+          col.speed = Math.random() * (maxSpeedScaled - minSpeedScaled) + minSpeedScaled;
           col.trailLength =
             Math.floor(Math.random() * (maxTrail - minTrail + 1)) + minTrail;
           col.chars = Array.from({ length: col.trailLength }).map(
