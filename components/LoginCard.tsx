@@ -74,7 +74,7 @@ export default function LoginCard() {
   const cardStyle: React.CSSProperties = {
     position: "relative",
     width: "420px",
-    height: "auto",
+    height: "560px",
     transformStyle: "preserve-3d",
     transition: "transform 0.5s ease",
     transform: mode === "signup" ? "rotateY(180deg)" : "rotateY(0deg)",
@@ -97,6 +97,7 @@ export default function LoginCard() {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
+    gap: "1rem",
     color: "#e5e7eb",
   };
 
@@ -143,7 +144,10 @@ export default function LoginCard() {
         style={{
           perspective: "1000px",
           width: "420px",
-          height: "520px",
+          height: "560px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         <div style={cardStyle}>
