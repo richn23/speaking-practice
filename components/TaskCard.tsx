@@ -592,10 +592,17 @@ export default function TaskCard({
                         method: "POST",
                         body: formData,
                       });
-                      const { transcript: t, error: transcribeError } = await response.json();
-                      if (transcribeError || !t) {
-                        throw new Error(transcribeError || "Transcription failed");
-                      }
+                    const { transcript: t, error: transcribeError, message: transcribeMessage } = await response.json();
+                    if (transcribeError || !t) {
+                      setErrorMessage(
+                        transcribeMessage ||
+                          "Sorry, the audio was unclear or too short. Please try to record again.",
+                      );
+                      setIsSubmitting(false);
+                      setIsTranscribing(false);
+                      setIsGeneratingFeedback(false);
+                      return;
+                    }
                       setTranscript(t ?? "");
 
                       // Feedback

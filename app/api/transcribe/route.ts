@@ -18,7 +18,7 @@ type SilenceCheckResult = {
   totalDurationSec: number;
 };
 
-const NO_SPEECH_MESSAGE = "Audio is unclear or too short—please try recording again.";
+const NO_SPEECH_MESSAGE = "Sorry, the audio was unclear or too short. Please try to record again.";
 
 const FRAME_MS = Number(process.env.VAD_FRAME_MS ?? "20");
 const FRAME_DURATION_SEC = Number.isFinite(FRAME_MS) && FRAME_MS > 0 ? FRAME_MS / 1000 : 0.02;
