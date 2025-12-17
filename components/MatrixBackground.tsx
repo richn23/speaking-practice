@@ -39,7 +39,11 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export default function MatrixBackground() {
+type MatrixBackgroundProps = {
+  colorScheme?: "purple" | "grey";
+};
+
+export default function MatrixBackground({ colorScheme = "purple" }: MatrixBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const columnsRef = useRef<Column[]>([]);
   const frameRef = useRef<number | null>(null);
@@ -52,8 +56,10 @@ export default function MatrixBackground() {
     if (!ctx) return;
 
     const bgColor = getCssColor("--bg-deep", "#0f0a18");
-    const headColor = getCssColor("--purple-bright", "#a78bfa");
-    const trailColor = getCssColor("--purple-dim", "#4c1d95");
+    const headColor =
+      colorScheme === "grey" ? "#d0d0d0" : getCssColor("--purple-bright", "#a78bfa");
+    const trailColor =
+      colorScheme === "grey" ? "#a0a0a0" : getCssColor("--purple-dim", "#4c1d95");
 
     const initColumns = () => {
       const { innerWidth, innerHeight } = window;
