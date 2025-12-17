@@ -12,6 +12,7 @@ export default function LoginCard() {
   const [mode, setMode] = useState<AuthMode>("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showVerification, setShowVerification] = useState(false);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -66,13 +67,14 @@ export default function LoginCard() {
       setError(err.message || "Could not create account");
       return;
     }
-    router.push("/home");
+    setShowVerification(true);
+    setMode("signin");
   };
 
   const cardStyle: React.CSSProperties = {
     position: "relative",
-    width: "360px",
-    height: "480px",
+    width: "420px",
+    height: "auto",
     transformStyle: "preserve-3d",
     transition: "transform 0.5s ease",
     transform: mode === "signup" ? "rotateY(180deg)" : "rotateY(0deg)",
@@ -88,9 +90,10 @@ export default function LoginCard() {
     background: "rgba(30, 30, 35, 0.7)",
     backdropFilter: "blur(12px)",
     border: "1px solid rgba(255, 255, 255, 0.1)",
-    borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-    padding: "2rem",
+    borderTop: "2px solid rgba(255, 255, 255, 0.3)",
+    borderRadius: "8px",
+    boxShadow: "0 6px 24px rgba(0, 0, 0, 0.55)",
+    padding: "2.5rem",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
@@ -100,24 +103,24 @@ export default function LoginCard() {
   const inputStyle: React.CSSProperties = {
     background: "rgba(20, 20, 25, 0.8)",
     color: "#f3f4f6",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "8px",
-    padding: "0.75rem",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "4px",
+    padding: "0.85rem",
     width: "100%",
     outline: "none",
   };
 
   const inputFocusStyle: React.CSSProperties = {
-    boxShadow: "0 0 0 2px rgba(255,255,255,0.15)",
-    borderColor: "rgba(255,255,255,0.2)",
+    boxShadow: "0 0 0 3px rgba(255,255,255,0.18)",
+    borderColor: "rgba(255,255,255,0.4)",
   };
 
   const buttonStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #f3f4f6, #d1d5db)",
+    background: "linear-gradient(135deg, #f9fafb, #d5d7dc)",
     color: "#111827",
     border: "none",
-    borderRadius: "10px",
-    padding: "0.85rem",
+    borderRadius: "6px",
+    padding: "0.875rem",
     fontWeight: 600,
     cursor: "pointer",
     transition: "filter 0.2s ease",
@@ -141,13 +144,13 @@ export default function LoginCard() {
             style={{
               fontSize: "1.6rem",
               fontWeight: 700,
-              marginBottom: "1rem",
+              marginBottom: "2rem",
               fontFamily: "var(--font-heading, 'Orbitron', sans-serif)",
             }}
           >
             Welcome Back
           </h2>
-          <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <form onSubmit={handleSignIn} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <input
               style={{ ...inputStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
@@ -179,6 +182,21 @@ export default function LoginCard() {
               {loading && mode === "signin" ? "Signing in..." : "Sign In"}
             </button>
           </form>
+          {showVerification && (
+            <div
+              style={{
+                marginTop: "1rem",
+                padding: "0.75rem 1rem",
+                borderRadius: 10,
+                background: "rgba(34,197,94,0.1)",
+                border: "1px solid rgba(34,197,94,0.3)",
+                color: "#bbf7d0",
+                fontFamily: "var(--font-body, 'Exo 2', sans-serif)",
+              }}
+            >
+              Account created! Check your email to verify, then sign in.
+            </div>
+          )}
           <div style={{ marginTop: "1rem" }}>
             <span style={subtleText}>New here? </span>
             <span onClick={flip} style={{ ...linkStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}>
@@ -267,6 +285,27 @@ export default function LoginCard() {
               Sign in
             </span>
           </div>
+          {showVerification && (
+            <div
+              style={{
+                marginTop: "1rem",
+                padding: "0.75rem 1rem",
+                borderRadius: 10,
+                background: "rgba(34,197,94,0.1)",
+                border: "1px solid rgba(34,197,94,0.3)",
+                color: "#bbf7d0",
+                fontFamily: "var(--font-body, 'Exo 2', sans-serif)",
+              }}
+            >
+              Account created! Check your email to verify, then sign in.{" "}
+              <span
+                onClick={() => setMode("signin")}
+                style={{ ...linkStyle, fontFamily: "var(--font-body, 'Exo 2', sans-serif)" }}
+              >
+                Back to Sign In
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
