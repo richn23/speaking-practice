@@ -134,7 +134,9 @@ export default function FeedbackCard({
                 fontStyle: "italic",
               }}
             >
-              {transcript && transcript.trim().length > 0 ? transcript : "No transcript available"}
+              {transcript && transcript.trim().length > 0
+                ? transcript
+                : "Sorry, the audio was unclear or too short. Please try to record again."}
             </div>
           </div>
 
