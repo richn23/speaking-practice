@@ -574,11 +574,13 @@ export default function TaskCard({
                     }
                     setIsSubmitting(true);
                     setErrorMessage(null);
-                    const path = await uploadAudio(audioBlob, task.id);
-                    if (!path) {
-                      setIsSubmitting(false);
-                      setErrorMessage("Upload failed. Please try again.");
-                      return;
+                    try {
+                      const path = await uploadAudio(audioBlob, task.id);
+                      if (!path) {
+                        console.warn("Upload failed; continuing without stored copy");
+                      }
+                    } catch (uploadErr) {
+                      console.error("Upload failed; continuing without stored copy", uploadErr);
                     }
 
                     // Transcribe
