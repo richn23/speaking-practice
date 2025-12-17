@@ -22,7 +22,6 @@ export default function HomePage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState<string>("there");
   const [loading, setLoading] = useState(true);
-  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -120,22 +119,20 @@ export default function HomePage() {
           justifyContent: "center",
           position: "relative",
           zIndex: 1,
-          paddingBottom: "3rem",
+          padding: "2rem",
         }}
       >
-        <div style={{ position: "relative", width: "700px", height: "420px" }}>
-          {levels.map((level, idx) => (
-            <LevelCard
-              key={level.id}
-              level={level}
-              rotation={rotations[idx] ?? 0}
-              zIndex={idx + 1}
-              isHovered={hovered === level.id}
-              onHover={() => setHovered(level.id)}
-              onLeave={() => setHovered(null)}
-              onClick={() => handleCardClick(level.id)}
-              highlight={level.id === "pre-int"}
-            />
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "960px",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "1.5rem",
+          }}
+        >
+          {levels.map((level) => (
+            <LevelCard key={level.id} level={level} onClick={() => handleCardClick(level.id)} highlight={level.id === "pre-int"} />
           ))}
         </div>
       </section>

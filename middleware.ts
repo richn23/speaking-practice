@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   // Touch session to ensure auth cookies refresh; route protection to be added later.
   await supabase.auth.getSession();
