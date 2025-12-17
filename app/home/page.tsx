@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MatrixBackground from "@/components/MatrixBackground";
 import LevelCard from "@/components/LevelCard";
-import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 const levels = [
   { id: "beginner", name: "Beginner", cefr: "A1", color: "#3b82f6", unlocked: false },
