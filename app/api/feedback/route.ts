@@ -231,15 +231,38 @@ ${transcript}
       return NextResponse.json({ error: "Invalid feedback format" }, { status: 500 });
     }
 
+    const scores = parsed.subscores ?? parsed.scores;
+
+    // Calculate overall score server-side — never trust GPT's arithmetic
+    let calculatedOverall = 0;
+    if (scores) {
+      const sum = (scores.taskCompletion || 0) + 
+                  (scores.elaboration || 0) + 
+                  (scores.coherence || 0) + 
+                  (scores.grammar || 0) + 
+                  (scores.vocabulary || 0);
+      calculatedOverall = Math.round((sum / 25) * 100);
+    }
+
+    // Determine performance label based on calculated score
+    const getPerformanceLabel = (score: number): string => {
+      if (score >= 80) return "Strong performance";
+      if (score >= 60) return "Developing";
+      if (score >= 40) return "Below target";
+      return "Needs support";
+    };
+
     const feedback = {
-      scoreOverall: parsed.scoreOverall,
-      performanceLabel: parsed.performanceLabel,
-      scores: parsed.subscores ?? parsed.scores,
+      scoreOverall: calculatedOverall,  // Use our calculation, not GPT's
+      performanceLabel: getPerformanceLabel(calculatedOverall),  // Derive from our score
+      scores: scores,
       corrections: parsed.corrections ?? [],
       vocabularyTip: parsed.vocabularyTip,
       stretchSuggestion: parsed.stretchSuggestion,
       strength: parsed.strength,
     };
+
+    console.log(`[feedback] Subscores: ${JSON.stringify(scores)}, Calculated overall: ${calculatedOverall}`);
 
     return NextResponse.json({ feedback });
   } catch (error) {

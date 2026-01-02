@@ -6,7 +6,13 @@ import { Check, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
 interface PronunciationData {
   overallScore: number;
   fluencyScore?: number;
-  problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[] }>;
+  problemWords: Array<{ 
+    word: string; 
+    score: number; 
+    ipa?: string; 
+    problemPhonemes?: string[];
+    heardAs?: string;  // What Azure detected, e.g., "/breɪkfəst/"
+  }>;
 }
 
 function getPronunciationLabel(score: number): { label: string; isGood: boolean } {
@@ -363,57 +369,58 @@ export default function FeedbackCard({
                   >
                     We had trouble understanding these words:
                   </div>
-                  <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem", margin: 0, padding: 0, listStyle: "none" }}>
+                  <ul style={{ display: "flex", flexDirection: "column", gap: "0.75rem", margin: 0, padding: 0, listStyle: "none" }}>
                     {pronunciationData.problemWords.map((item, index) => (
                       <li
                         key={index}
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.75rem",
-                          color: "#e9e4f0",
-                          flexWrap: "wrap",
+                          background: "rgba(20, 10, 30, 0.5)",
+                          borderRadius: 8,
+                          padding: "0.6rem 0.75rem",
+                          border: "1px solid rgba(124, 58, 237, 0.1)",
                         }}
                       >
-                        <span style={{ fontWeight: 600 }}>{item.word}</span>
-                        {item.ipa && (
-                          <span style={{ color: "#9f8fc0", fontSize: "0.9rem", fontFamily: "serif" }}>{item.ipa}</span>
-                        )}
-                        {item.problemPhonemes && item.problemPhonemes.length > 0 && (
-                          <span style={{ 
-                            color: "#fbbf24", 
-                            fontSize: "0.8rem",
-                            background: "rgba(251, 191, 36, 0.15)",
-                            padding: "0.15rem 0.4rem",
-                            borderRadius: 4,
-                          }}>
-                            sounds: {item.problemPhonemes.join(", ")}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => playPronunciation(item.word)}
-                          disabled={playingWord === item.word}
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            background: playingWord === item.word ? "rgba(124, 58, 237, 0.25)" : "rgba(124, 58, 237, 0.1)",
-                            border: "1px solid rgba(124, 58, 237, 0.3)",
-                            borderRadius: 6,
-                            cursor: playingWord === item.word ? "default" : "pointer",
-                            transition: "background 150ms ease",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.25rem",
-                          }}
-                          title="Hear correct pronunciation"
-                        >
-                          {playingWord === item.word ? (
-                            <span style={{ color: "#a78bfa", fontSize: "0.8rem" }}>Playing...</span>
-                          ) : (
-                            <>
-                              <span style={{ fontSize: "1rem" }}>🔊</span>
-                            </>
+                        <div style={{ fontWeight: 700, color: "#e9e4f0", marginBottom: "0.4rem", fontSize: "1rem" }}>
+                          {item.word}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.9rem" }}>
+                          {item.heardAs && (
+                            <div style={{ color: "#fbbf24" }}>
+                              <span style={{ color: "#9f8fc0" }}>We heard: </span>
+                              <span style={{ fontFamily: "serif" }}>{item.heardAs}</span>
+                            </div>
                           )}
-                        </button>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <span style={{ color: "#9f8fc0" }}>Target: </span>
+                            {item.ipa ? (
+                              <span style={{ color: "#34d399", fontFamily: "serif" }}>{item.ipa}</span>
+                            ) : (
+                              <span style={{ color: "#9f8fc0", fontStyle: "italic" }}>loading...</span>
+                            )}
+                            <button
+                              onClick={() => playPronunciation(item.word)}
+                              disabled={playingWord === item.word}
+                              style={{
+                                padding: "0.2rem 0.4rem",
+                                background: playingWord === item.word ? "rgba(124, 58, 237, 0.25)" : "rgba(124, 58, 237, 0.1)",
+                                border: "1px solid rgba(124, 58, 237, 0.3)",
+                                borderRadius: 6,
+                                cursor: playingWord === item.word ? "default" : "pointer",
+                                transition: "background 150ms ease",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                              }}
+                              title="Hear correct pronunciation"
+                            >
+                              {playingWord === item.word ? (
+                                <span style={{ color: "#a78bfa", fontSize: "0.75rem" }}>Playing...</span>
+                              ) : (
+                                <span style={{ fontSize: "0.9rem" }}>🔊</span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ul>

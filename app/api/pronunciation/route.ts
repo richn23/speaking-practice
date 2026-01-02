@@ -11,12 +11,14 @@ interface WordResult {
   AccuracyScore?: number;
   PronunciationAssessment?: { AccuracyScore: number };
   Phonemes?: PhonemeResult[];
+  ErrorType?: string;  // "None", "Mispronunciation", "Omission", "Insertion"
 }
 
 interface ProblemWord {
   word: string;
   score: number;
   problemPhonemes?: string[];
+  heardAs?: string;  // Concatenated phonemes Azure detected, e.g., "/breɪkfəst/"
 }
 
 export async function POST(request: NextRequest) {
@@ -140,37 +142,46 @@ export async function POST(request: NextRequest) {
     const fluencyScore = nBest.FluencyScore ?? nBest.PronunciationAssessment?.FluencyScore ?? 0;
     const completenessScore = nBest.CompletenessScore ?? nBest.PronunciationAssessment?.CompletenessScore ?? 0;
 
-    // Get problem words - check both word-level AND phoneme-level scores
+    // Get problem words - intelligibility-focused flagging
+    // Only flag words that are truly problematic, don't nitpick good-enough pronunciation
     const words: WordResult[] = nBest.Words || [];
     const problemWords: ProblemWord[] = [];
-    const PHONEME_THRESHOLD = 60;
-    const WORD_THRESHOLD = 70;
+    const WORD_THRESHOLD = 70;           // Flag words scoring below this
+    const PHONEME_THRESHOLD = 40;        // Only show really problematic phonemes (< 40)
 
     words.forEach((word: WordResult) => {
       // Get word-level accuracy
       const wordAccuracy = word.AccuracyScore ?? word.PronunciationAssessment?.AccuracyScore ?? 100;
       
-      // Check phoneme-level scores
-      const phonemes = word.Phonemes || [];
-      const problemPhonemes: string[] = [];
+      // Check if word has explicit mispronunciation error
+      const isMispronunciation = word.ErrorType === "Mispronunciation";
       
-      phonemes.forEach((phoneme: PhonemeResult) => {
-        const phonemeAccuracy = phoneme.AccuracyScore ?? phoneme.PronunciationAssessment?.AccuracyScore ?? 100;
-        if (phonemeAccuracy < PHONEME_THRESHOLD) {
-          problemPhonemes.push(phoneme.Phoneme);
-        }
-      });
+      // Flag word if: word score is low OR explicitly marked as mispronunciation
+      const shouldFlag = wordAccuracy < WORD_THRESHOLD || isMispronunciation;
+      
+      if (shouldFlag) {
+        // For flagged words, collect only really problematic phonemes (< 40)
+        const phonemes = word.Phonemes || [];
+        const problemPhonemes: string[] = [];
+        
+        phonemes.forEach((phoneme: PhonemeResult) => {
+          const phonemeAccuracy = phoneme.AccuracyScore ?? phoneme.PronunciationAssessment?.AccuracyScore ?? 100;
+          if (phonemeAccuracy < PHONEME_THRESHOLD) {
+            problemPhonemes.push(phoneme.Phoneme);
+          }
+        });
 
-      // Flag word if: word score is low OR any phoneme scored poorly
-      const hasProblem = wordAccuracy < WORD_THRESHOLD || problemPhonemes.length > 0;
-      
-      if (hasProblem) {
+        // Build "heard as" string from all detected phonemes
+        const allPhonemes = phonemes.map((p: PhonemeResult) => p.Phoneme).join("");
+        const heardAs = allPhonemes ? `/${allPhonemes}/` : undefined;
+
         const problemWord: ProblemWord = {
           word: word.Word,
           score: Math.round(wordAccuracy),
+          heardAs: heardAs,
         };
         
-        // Only include problemPhonemes if there are any
+        // Only include problemPhonemes if there are really bad ones
         if (problemPhonemes.length > 0) {
           problemWord.problemPhonemes = problemPhonemes;
         }

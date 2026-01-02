@@ -34,7 +34,8 @@ export default function UnitPage() {
         strength?: string;
         pronunciationData?: {
           overallScore: number;
-          problemWords: Array<{ word: string; score: number; ipa?: string }>;
+          fluencyScore?: number;
+          problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[]; heardAs?: string }>;
         };
       }
     >

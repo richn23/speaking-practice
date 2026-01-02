@@ -35,7 +35,7 @@ type TaskCardProps = {
       pronunciationData?: {
         overallScore: number;
         fluencyScore?: number;
-        problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[] }>;
+        problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[]; heardAs?: string }>;
       };
     }
   ) => void;
