@@ -3,6 +3,7 @@
 import type { Task } from "@/data/unit1";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { uploadAudio } from "@/lib/uploadAudio";
+import { convertToWav, needsConversion } from "@/lib/convertToWav";
 import { Check, Lock, Play, Mic, Square } from "lucide-react";
 import WaveformPlayer from "@/components/WaveformPlayer";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -31,6 +32,11 @@ type TaskCardProps = {
       vocabularyTip?: string;
       stretchSuggestion?: string;
       strength?: string;
+      pronunciationData?: {
+        overallScore: number;
+        fluencyScore?: number;
+        problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[] }>;
+      };
     }
   ) => void;
 };
@@ -605,6 +611,58 @@ export default function TaskCard({
                     }
                       setTranscript(t ?? "");
 
+                      // Pronunciation assessment (parallel with feedback)
+                      let pronunciationData: {
+                        overallScore: number;
+                        problemWords: Array<{ word: string; score: number; ipa?: string }>;
+                      } | undefined;
+                      
+                      try {
+                        // Convert audio to WAV in browser before sending to API
+                        let audioForPronunciation: Blob = audioBlob;
+                        if (needsConversion(audioBlob.type)) {
+                          console.log("[TaskCard] Converting audio to WAV for pronunciation...");
+                          audioForPronunciation = await convertToWav(audioBlob);
+                          console.log(`[TaskCard] Converted to WAV: ${audioForPronunciation.size} bytes`);
+                        }
+                        
+                        const pronFormData = new FormData();
+                        pronFormData.append("audio", audioForPronunciation, "recording.wav");
+                        const pronunciationResponse = await fetch("/api/pronunciation", {
+                          method: "POST",
+                          body: pronFormData,
+                        });
+                        const pronData = await pronunciationResponse.json();
+                        
+                        if (pronData.problemWords?.length > 0) {
+                          // Get IPA for problem words
+                          const ipaResponse = await fetch("/api/ipa", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              words: pronData.problemWords.map((w: { word: string }) => w.word),
+                            }),
+                          });
+                          const ipaData = await ipaResponse.json();
+                          
+                          // Merge IPA into problem words
+                          pronData.problemWords = pronData.problemWords.map((pw: { word: string; score: number; problemPhonemes?: string[] }) => {
+                            const ipaMatch = ipaData.words?.find((w: { word: string; ipa: string }) =>
+                              w.word.toLowerCase() === pw.word.toLowerCase()
+                            );
+                            return { ...pw, ipa: ipaMatch?.ipa };
+                          });
+                        }
+                        
+                        pronunciationData = {
+                          overallScore: pronData.overallScore ?? 0,
+                          fluencyScore: pronData.fluencyScore ?? 0,
+                          problemWords: pronData.problemWords ?? [],
+                        };
+                      } catch (pronError) {
+                        console.warn("Pronunciation assessment failed; continuing without it", pronError);
+                      }
+
                       // Feedback
                       setIsGeneratingFeedback(true);
                       const fbResponse = await fetch("/api/feedback", {
@@ -616,6 +674,7 @@ export default function TaskCard({
                           taskTitle: task.title,
                           taskInstructions: task.instructions,
                           taskPrompt: task.prompt,
+                          taskItems: task.items,
                           transcript: t,
                         }),
                       });
@@ -623,6 +682,11 @@ export default function TaskCard({
                       const feedback = fbJson.feedback;
                       if (fbJson.error || !feedback) {
                         throw new Error(fbJson.error || "Feedback failed");
+                      }
+
+                      // Add pronunciation data to feedback
+                      if (pronunciationData) {
+                        feedback.pronunciationData = pronunciationData;
                       }
 
                       onComplete?.(task.id, isRetry, t ?? "", feedback);

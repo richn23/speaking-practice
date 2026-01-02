@@ -65,6 +65,19 @@ Task Completion, Elaboration, Coherence, Grammar, Vocabulary (per detailed rules
 OVERALL SCORE = (sum of subscores)/25 * 100, rounded.
 Labels: 80-100 "Strong performance", 60-79 "Developing", 40-59 "Below target", 0-39 "Needs support".
 
+## TASK COMPLETION BY TYPE (Critical for taskCompletion subscore)
+Use the Task Items list provided to determine how many required items were addressed.
+
+- **qa**: Check how many questions from the Task Items array were answered. Score 5/5 ONLY if ALL questions are addressed. Score proportionally: e.g., 2/6 questions answered = ~2/5 completion (round to nearest). Each question needs at least a 1-sentence answer to count as addressed.
+
+- **long_talk**: Must address the prompt topic with relevant extended speech (~60+ words). Check if the response covers the bullet points mentioned in the prompt. Score based on coverage of the suggested talking points.
+
+- **this_or_that**: Must choose AND give a reason for EACH item in the Task Items list. Score proportionally if items are skipped. e.g., 3/5 items addressed with choice + reason = 3/5 completion.
+
+- **image**: Must describe people/objects visible, actions happening, and setting/context. Score 5/5 if all three aspects covered; reduce if missing major elements.
+
+- **gateway**: Extended talk combining multiple skills. Check if the response addresses the full scope of the instructions (typically a complete day/routine with morning, afternoon, evening). Score based on comprehensiveness.
+
 CORRECTIONS (max 2)
 - Only include if there ARE errors in A2 structures. If error-free, return empty array.
 - ONLY correct when there is a clear error or meaning is awkward/unclear. If the learner’s phrase is acceptable, do NOT suggest an alternative. Avoid stylistic preferences.
@@ -109,7 +122,7 @@ If score <70: "stretchSuggestion": null
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { taskId, taskType, taskTitle, taskInstructions, taskPrompt, transcript } = body;
+    const { taskId, taskType, taskTitle, taskInstructions, taskPrompt, taskItems, transcript } = body;
 
     if (!transcript || !transcript.trim()) {
       return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
@@ -177,12 +190,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ feedback });
     }
 
+    // Format task items if provided (for qa, this_or_that tasks)
+    const formattedItems = taskItems?.length
+      ? taskItems.map((item: { orderIndex: number; promptText: string }, idx: number) => 
+          `${item.orderIndex ?? idx + 1}. ${item.promptText}`
+        ).join("\n")
+      : null;
+
     const userContent = `
 Task ID: ${taskId ?? "unknown"}
 Task Type: ${taskType ?? "unknown"}
 Task Title: ${taskTitle ?? "unknown"}
 Task Instructions: ${taskInstructions ?? "not provided"}
 Task Prompt: ${taskPrompt ?? "not provided"}
+${formattedItems ? `\nTask Items (${taskItems.length} total - student must address ALL):\n${formattedItems}` : ""}
 Transcript:
 ${transcript}
     `;

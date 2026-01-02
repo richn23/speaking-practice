@@ -32,6 +32,10 @@ export default function UnitPage() {
         vocabularyTip?: string;
         stretchSuggestion?: string;
         strength?: string;
+        pronunciationData?: {
+          overallScore: number;
+          problemWords: Array<{ word: string; score: number; ipa?: string }>;
+        };
       }
     >
   >({});
@@ -121,6 +125,7 @@ export default function UnitPage() {
                   vocabularyTip={feedbacks[task.id]?.vocabularyTip}
                   stretchSuggestion={feedbacks[task.id]?.stretchSuggestion}
                   strength={feedbacks[task.id]?.strength}
+                  pronunciationData={feedbacks[task.id]?.pronunciationData}
                 />
               )}
             </div>

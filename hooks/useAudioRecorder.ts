@@ -66,7 +66,16 @@ export function useAudioRecorder() {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
-        const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        // Try OGG (Azure-compatible) first, fall back to WebM
+        const mimeType = MediaRecorder.isTypeSupported("audio/ogg; codecs=opus")
+          ? "audio/ogg; codecs=opus"
+          : MediaRecorder.isTypeSupported("audio/webm; codecs=opus")
+          ? "audio/webm; codecs=opus"
+          : "audio/webm";
+        
+        console.log("[AudioRecorder] Using mimeType:", mimeType);
+        
+        const recorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = recorder;
         chunksRef.current = [];
         startTimeRef.current = performance.now();
@@ -78,7 +87,7 @@ export function useAudioRecorder() {
         };
 
         recorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          const blob = new Blob(chunksRef.current, { type: mimeType });
           const url = URL.createObjectURL(blob);
           const recordedDurationSeconds = startTimeRef.current
             ? Math.max(0, (performance.now() - startTimeRef.current) / 1000)
