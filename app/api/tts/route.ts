@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
     speechConfig.speechSynthesisVoiceName = "en-GB-RyanNeural"; // British English voice
 
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
       const synthesizer = new sdk.SpeechSynthesizer(speechConfig);
 
       synthesizer.speakTextAsync(
