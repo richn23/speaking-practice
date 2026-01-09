@@ -614,7 +614,8 @@ export default function TaskCard({
                       // Pronunciation assessment (parallel with feedback)
                       let pronunciationData: {
                         overallScore: number;
-                        problemWords: Array<{ word: string; score: number; ipa?: string }>;
+                        fluencyScore?: number;
+                        problemWords: Array<{ word: string; score: number; ipa?: string; heardAs?: string; problemPhonemes?: string[] }>;
                       } | undefined;
                       
                       try {
