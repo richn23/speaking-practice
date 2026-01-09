@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Turbopack config (Next.js 16 default bundler)
+  turbopack: {},
+  
+  // Webpack config kept for compatibility
   webpack: (config, { isServer }) => {
     // Don't bundle ffmpeg-wasm on server side
     if (isServer) {
