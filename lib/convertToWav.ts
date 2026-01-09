@@ -73,7 +73,8 @@ export async function convertToWav(audioBlob: Blob): Promise<Blob> {
   await ff.deleteFile(inputFile);
   await ff.deleteFile(outputFile);
 
-  const wavBlob = new Blob([outputData], { type: "audio/wav" });
+  // Cast to Uint8Array to satisfy BlobPart type requirement
+  const wavBlob = new Blob([outputData as Uint8Array], { type: "audio/wav" });
   console.log(`[convertToWav] Converted to WAV: ${wavBlob.size} bytes`);
 
   return wavBlob;
