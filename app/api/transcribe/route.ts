@@ -23,11 +23,11 @@ const NO_SPEECH_MESSAGE = "Sorry, the audio was unclear or too short. Please try
 const FRAME_MS = Number(process.env.VAD_FRAME_MS ?? "20");
 const FRAME_DURATION_SEC = Number.isFinite(FRAME_MS) && FRAME_MS > 0 ? FRAME_MS / 1000 : 0.02;
 const SAMPLE_RATE = 16000;
-const SAMPLES_PER_FRAME = SAMPLE_RATE * FRAME_DURATION_SEC; // ~320 @20ms
-const BYTES_PER_SAMPLE = 4; // f32le
-const FRAME_BYTES = Math.max(1, Math.floor(SAMPLES_PER_FRAME * BYTES_PER_SAMPLE)); // guard
+const SAMPLES_PER_FRAME = SAMPLE_RATE * FRAME_DURATION_SEC;
+const BYTES_PER_SAMPLE = 4;
+const FRAME_BYTES = Math.max(1, Math.floor(SAMPLES_PER_FRAME * BYTES_PER_SAMPLE));
 const SILENCE_DBFS = Number(process.env.VAD_SILENCE_DBFS ?? "-45");
-const SILENCE_THRESHOLD = Math.pow(10, SILENCE_DBFS / 20); // linear RMS threshold
+const SILENCE_THRESHOLD = Math.pow(10, SILENCE_DBFS / 20);
 const SILENCE_RATIO_GATE = Number.isFinite(Number(process.env.VAD_SILENCE_RATIO_CUTOFF))
   ? Number(process.env.VAD_SILENCE_RATIO_CUTOFF)
   : 0.85;
@@ -47,7 +47,6 @@ async function detectSilenceEnergy(tempPath: string): Promise<SilenceCheckResult
       console.warn("[silence-gate] ffmpeg-static unavailable; skipping silence check");
       return resolve(null);
     }
-
 
     const ff = spawn(ffmpeg, [
       "-i",
@@ -172,9 +171,9 @@ export async function POST(request: NextRequest) {
       file: audioFile,
       model: "whisper-1",
       language: "en",
-      temperature: 0, // stable, avoid creative outputs
+      temperature: 0,
       prompt:
-        "Context: short English answers about daily routines and daily life. If the audio is unclear or too short, please return an empty transcript so the user can try recording again.",
+        "TRANSCRIBE VERBATIM. Do NOT correct grammar. Do NOT fix mistakes. Do NOT remove filler words like um, uh, er. Do NOT clean up false starts or repetitions. Keep EVERY error exactly as spoken. This is a language learner assessment - their mistakes are critical data. Wrong grammar must stay wrong. Example: if they say 'I go yesterday to shop' transcribe exactly that, do NOT change to 'I went to the shop yesterday'.",
     });
 
     await fs.unlink(tempPath).catch(() => {});
@@ -193,4 +192,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Transcription failed" }, { status: 500 });
   }
 }
-
