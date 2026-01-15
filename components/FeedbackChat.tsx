@@ -64,7 +64,7 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
 
   useEffect(() => {
     if (isOpen) {
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
@@ -80,11 +80,17 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
     } else {
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
     }
     return () => {
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
     };
   }, [isOpen]);
 
@@ -130,10 +136,12 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     sendMessage(inputValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(inputValue);
@@ -169,223 +177,237 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
         </button>
       </div>
 
-      {/* Floating Chat Widget */}
+      {/* Full screen overlay + Chat Widget */}
       {isOpen && (
         <div
           style={{
             position: "fixed",
-            bottom: 10,
-            left: 10,
-            right: 10,
-            maxWidth: 350,
-            marginLeft: "auto",
-            height: 400,
-            background: "#1a0a2e",
-            border: "1px solid rgba(124, 58, 237, 0.4)",
-            borderRadius: 16,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            zIndex: 999,
             display: "flex",
-            flexDirection: "column",
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
-            overflow: "hidden",
-            zIndex: 1000,
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: 10,
           }}
+          onClick={() => setIsOpen(false)}
         >
-          {/* Header */}
+          {/* Chat Widget */}
           <div
             style={{
-              background: "rgba(124, 58, 237, 0.25)",
-              padding: "12px 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "1px solid rgba(124, 58, 237, 0.2)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  background: "rgba(124, 58, 237, 0.4)",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.2rem",
-                }}
-              >
-                🧠
-              </div>
-              <div>
-                <div style={{ color: "#e9e4f0", fontWeight: 600, fontSize: "0.95rem" }}>
-                  Speaking Coach
-                </div>
-                <div style={{ color: "#34d399", fontSize: "0.75rem" }}>● Online</div>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#9f8fc0",
-                cursor: "pointer",
-                fontSize: "1.25rem",
-                padding: "4px 8px",
-                borderRadius: 4,
-              }}
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div
-            style={{
-              flex: 1,
-              padding: 16,
-              overflowY: "auto",
+              width: "100%",
+              maxWidth: 350,
+              height: 400,
+              background: "#1a0a2e",
+              border: "1px solid rgba(124, 58, 237, 0.4)",
+              borderRadius: 16,
               display: "flex",
               flexDirection: "column",
-              gap: 12,
-              background: "#0d0618",
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
+              overflow: "hidden",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {messages.length === 0 ? (
-              <>
+            {/* Header */}
+            <div
+              style={{
+                background: "rgba(124, 58, 237, 0.25)",
+                padding: "12px 16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottom: "1px solid rgba(124, 58, 237, 0.2)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div
                   style={{
-                    alignSelf: "flex-start",
-                    maxWidth: "85%",
-                    padding: "10px 14px",
-                    borderRadius: 16,
-                    borderBottomLeftRadius: 4,
-                    background: "rgba(124, 58, 237, 0.2)",
-                    color: "#e9e4f0",
-                    fontSize: "0.9rem",
-                    lineHeight: 1.4,
+                    width: 36,
+                    height: 36,
+                    background: "rgba(124, 58, 237, 0.4)",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.2rem",
                   }}
                 >
-                  Hi! 👋 I can help you understand your score. Ask me anything!
+                  🧠
                 </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-                  {STARTER_QUESTIONS.map((question) => (
-                    <button
-                      key={question}
-                      onClick={() => handleStarterClick(question)}
-                      style={{
-                        padding: "6px 12px",
-                        background: "rgba(124, 58, 237, 0.15)",
-                        border: "1px solid rgba(124, 58, 237, 0.3)",
-                        borderRadius: 20,
-                        color: "#c4b5fd",
-                        fontSize: "0.8rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {question}
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-                      maxWidth: "85%",
-                      padding: "10px 14px",
-                      borderRadius: 16,
-                      borderBottomRightRadius: msg.role === "user" ? 4 : 16,
-                      borderBottomLeftRadius: msg.role === "assistant" ? 4 : 16,
-                      background: msg.role === "user" ? "#7c3aed" : "rgba(124, 58, 237, 0.2)",
-                      color: msg.role === "user" ? "white" : "#e9e4f0",
-                      fontSize: "0.9rem",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {msg.content}
+                <div>
+                  <div style={{ color: "#e9e4f0", fontWeight: 600, fontSize: "0.95rem" }}>
+                    Speaking Coach
                   </div>
-                ))}
+                  <div style={{ color: "#34d399", fontSize: "0.75rem" }}>● Online</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#9f8fc0",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  padding: "4px 8px",
+                  borderRadius: 4,
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
-                {isLoading && (
+            {/* Messages */}
+            <div
+              style={{
+                flex: 1,
+                padding: 16,
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                background: "#0d0618",
+              }}
+            >
+              {messages.length === 0 ? (
+                <>
                   <div
                     style={{
                       alignSelf: "flex-start",
+                      maxWidth: "85%",
                       padding: "10px 14px",
                       borderRadius: 16,
                       borderBottomLeftRadius: 4,
                       background: "rgba(124, 58, 237, 0.2)",
+                      color: "#e9e4f0",
+                      fontSize: "0.9rem",
+                      lineHeight: 1.4,
                     }}
                   >
-                    <div style={{ display: "flex", gap: 4 }}>
-                      <span style={{ width: 8, height: 8, background: "#a78bfa", borderRadius: "50%", animation: "bounce 1s infinite" }}></span>
-                      <span style={{ width: 8, height: 8, background: "#a78bfa", borderRadius: "50%", animation: "bounce 1s infinite 0.15s" }}></span>
-                      <span style={{ width: 8, height: 8, background: "#a78bfa", borderRadius: "50%", animation: "bounce 1s infinite 0.3s" }}></span>
-                    </div>
+                    Hi! 👋 I can help you understand your score. Ask me anything!
                   </div>
-                )}
 
-                <div ref={messagesEndRef} />
-              </>
-            )}
-          </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                    {STARTER_QUESTIONS.map((question) => (
+                      <button
+                        key={question}
+                        onClick={() => handleStarterClick(question)}
+                        style={{
+                          padding: "6px 12px",
+                          background: "rgba(124, 58, 237, 0.15)",
+                          border: "1px solid rgba(124, 58, 237, 0.3)",
+                          borderRadius: 20,
+                          color: "#c4b5fd",
+                          fontSize: "0.8rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+                        maxWidth: "85%",
+                        padding: "10px 14px",
+                        borderRadius: 16,
+                        borderBottomRightRadius: msg.role === "user" ? 4 : 16,
+                        borderBottomLeftRadius: msg.role === "assistant" ? 4 : 16,
+                        background: msg.role === "user" ? "#7c3aed" : "rgba(124, 58, 237, 0.2)",
+                        color: msg.role === "user" ? "white" : "#e9e4f0",
+                        fontSize: "0.9rem",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {msg.content}
+                    </div>
+                  ))}
 
-          {/* Input */}
-          <div
-            style={{
-              padding: 12,
-              background: "#1a0a2e",
-              borderTop: "1px solid rgba(124, 58, 237, 0.2)",
-              display: "flex",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              disabled={isLoading}
+                  {isLoading && (
+                    <div
+                      style={{
+                        alignSelf: "flex-start",
+                        padding: "10px 14px",
+                        borderRadius: 16,
+                        borderBottomLeftRadius: 4,
+                        background: "rgba(124, 58, 237, 0.2)",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <span style={{ width: 8, height: 8, background: "#a78bfa", borderRadius: "50%", animation: "bounce 1s infinite" }}></span>
+                        <span style={{ width: 8, height: 8, background: "#a78bfa", borderRadius: "50%", animation: "bounce 1s infinite 0.15s" }}></span>
+                        <span style={{ width: 8, height: 8, background: "#a78bfa", borderRadius: "50%", animation: "bounce 1s infinite 0.3s" }}></span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+
+            {/* Input */}
+            <div
               style={{
-                flex: 1,
-                background: "#0d0618",
-                border: "1px solid rgba(124, 58, 237, 0.3)",
-                borderRadius: 24,
-                padding: "10px 16px",
-                color: "#e9e4f0",
-                fontSize: "16px",
-                outline: "none",
-              }}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading || !inputValue.trim()}
-              style={{
-                width: 40,
-                height: 40,
-                background: "#7c3aed",
-                border: "none",
-                borderRadius: "50%",
-                color: "white",
-                cursor: isLoading || !inputValue.trim() ? "not-allowed" : "pointer",
+                padding: 12,
+                background: "#1a0a2e",
+                borderTop: "1px solid rgba(124, 58, 237, 0.2)",
                 display: "flex",
+                gap: 10,
                 alignItems: "center",
-                justifyContent: "center",
-                opacity: isLoading || !inputValue.trim() ? 0.5 : 1,
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message..."
+                disabled={isLoading}
+                style={{
+                  flex: 1,
+                  background: "#0d0618",
+                  border: "1px solid rgba(124, 58, 237, 0.3)",
+                  borderRadius: 24,
+                  padding: "10px 16px",
+                  color: "#e9e4f0",
+                  fontSize: "16px",
+                  outline: "none",
+                }}
+              />
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading || !inputValue.trim()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  background: "#7c3aed",
+                  border: "none",
+                  borderRadius: "50%",
+                  color: "white",
+                  cursor: isLoading || !inputValue.trim() ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: isLoading || !inputValue.trim() ? 0.5 : 1,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
