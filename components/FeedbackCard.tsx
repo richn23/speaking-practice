@@ -12,7 +12,7 @@ interface PronunciationData {
     score: number; 
     ipa?: string; 
     problemPhonemes?: string[];
-    heardAs?: string;  // What Azure detected, e.g., "/breɪkfəst/"
+    heardAs?: string;
   }>;
 }
 
@@ -325,7 +325,6 @@ export default function FeedbackCard({
                 Pronunciation & Fluency
               </div>
               
-              {/* Labels row */}
               <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginBottom: pronunciationData.problemWords.length > 0 ? "0.75rem" : 0 }}>
                 {(() => {
                   const pronLabel = getPronunciationLabel(pronunciationData.overallScore);
@@ -351,7 +350,6 @@ export default function FeedbackCard({
                 })()}
               </div>
 
-              {/* Problem words */}
               {pronunciationData.problemWords.length > 0 && (
                 <div
                   style={{
@@ -444,6 +442,7 @@ export default function FeedbackCard({
                 corrections: corrections || [],
                 vocabularyTip: vocabularyTip || "",
                 strength: strength || "",
+                pronunciationData: pronunciationData,
               }}
             />
           )}

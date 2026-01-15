@@ -28,6 +28,16 @@ interface FeedbackContext {
   }>;
   vocabularyTip: string;
   strength: string;
+  pronunciationData?: {
+    overallScore: number;
+    fluencyScore?: number;
+    problemWords: Array<{
+      word: string;
+      score: number;
+      ipa?: string;
+      heardAs?: string;
+    }>;
+  };
 }
 
 interface FeedbackChatProps {

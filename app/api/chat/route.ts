@@ -16,8 +16,10 @@ IMPORTANT LANGUAGE RULES:
 
 You know about:
 - Their spoken words (transcript)
-- Their scores
-- Their mistakes and corrections
+- Their scores (overall and 5 subscores)
+- Their grammar mistakes and corrections
+- Their pronunciation (which words were unclear)
+- Their fluency (how smooth they spoke)
 
 Your job:
 - Explain their score in simple words
@@ -65,6 +67,16 @@ interface FeedbackContext {
   }>;
   vocabularyTip: string;
   strength: string;
+  pronunciationData?: {
+    overallScore: number;
+    fluencyScore?: number;
+    problemWords: Array<{
+      word: string;
+      score: number;
+      ipa?: string;
+      heardAs?: string;
+    }>;
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -80,25 +92,54 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 });
     }
 
+    // Build pronunciation section
+    let pronunciationSection = "No pronunciation data available.";
+    if (feedbackContext.pronunciationData) {
+      const pronData = feedbackContext.pronunciationData;
+      pronunciationSection = `Pronunciation score: ${pronData.overallScore}/100`;
+      
+      if (pronData.fluencyScore !== undefined) {
+        pronunciationSection += `\nFluency score: ${pronData.fluencyScore}/100`;
+      }
+      
+      if (pronData.problemWords && pronData.problemWords.length > 0) {
+        pronunciationSection += `\n\nWords they had trouble with:`;
+        pronData.problemWords.forEach(word => {
+          pronunciationSection += `\n- "${word.word}"`;
+          if (word.heardAs) {
+            pronunciationSection += ` (we heard: ${word.heardAs})`;
+          }
+          if (word.ipa) {
+            pronunciationSection += ` (correct: ${word.ipa})`;
+          }
+        });
+      } else {
+        pronunciationSection += `\nNo problem words - pronunciation was clear!`;
+      }
+    }
+
     const contextSummary = `
 ## Student Info
 
 Task: ${feedbackContext.taskTitle}
 What they said: "${feedbackContext.transcript}"
 
-Score: ${feedbackContext.scoreOverall}/100
+Overall Score: ${feedbackContext.scoreOverall}/100 (${feedbackContext.performanceLabel})
 
-Scores (each out of 5):
+Subscores (each out of 5):
 - Task Completion: ${feedbackContext.scores.taskCompletion}/5
 - Elaboration: ${feedbackContext.scores.elaboration}/5
 - Coherence: ${feedbackContext.scores.coherence}/5
 - Grammar: ${feedbackContext.scores.grammar}/5
 - Vocabulary: ${feedbackContext.scores.vocabulary}/5
 
-Corrections:
+Grammar Corrections:
 ${feedbackContext.corrections.length > 0 
   ? feedbackContext.corrections.map(c => `- They said "${c.original}" → Should be "${c.corrected}" (${c.explanation})`).join("\n")
   : "No corrections - grammar was good!"}
+
+Pronunciation & Fluency:
+${pronunciationSection}
 
 Vocabulary tip: ${feedbackContext.vocabularyTip || "None"}
 Strength: ${feedbackContext.strength || "None"}
