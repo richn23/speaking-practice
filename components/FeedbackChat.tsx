@@ -47,7 +47,7 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,7 +59,6 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
     }
   }, [isOpen]);
 
-  // Close on escape key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
@@ -113,6 +112,13 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
     sendMessage(inputValue);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(inputValue);
+    }
+  };
+
   const handleStarterClick = (question: string) => {
     sendMessage(question);
   };
@@ -134,32 +140,43 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.85)" }}
           onClick={() => setIsOpen(false)}
         >
           {/* Modal Content */}
           <div
-            className="w-full max-w-lg rounded-xl overflow-hidden"
+            className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
             style={{
-              background: "rgba(30, 15, 45, 0.95)",
+              background: "#1a0a2e",
               border: "1px solid rgba(124, 58, 237, 0.3)",
-              backdropFilter: "blur(12px)",
-              maxHeight: "80vh",
+              height: "600px",
+              maxHeight: "85vh",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: "1px solid rgba(124, 58, 237, 0.2)" }}
+              className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+              style={{ 
+                background: "rgba(124, 58, 237, 0.2)",
+                borderBottom: "1px solid rgba(124, 58, 237, 0.2)" 
+              }}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🧠</span>
-                <span className="text-purple-200 font-semibold text-lg">Speaking Coach</span>
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(124, 58, 237, 0.3)" }}
+                >
+                  <span className="text-xl">🧠</span>
+                </div>
+                <div>
+                  <div className="text-purple-100 font-semibold">Speaking Coach</div>
+                  <div className="text-purple-400 text-xs">Online</div>
+                </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-purple-400 hover:text-purple-200 transition-colors p-2 hover:bg-purple-500/20 rounded-lg"
+                className="text-purple-400 hover:text-purple-200 transition-colors p-2 hover:bg-purple-500/20 rounded-full"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -170,41 +187,36 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
 
             {/* Messages Area */}
             <div
-              className="p-4 space-y-4 overflow-y-auto"
-              style={{ height: "400px" }}
+              className="flex-1 overflow-y-auto p-4 space-y-3"
+              style={{ background: "#0d0618" }}
             >
               {messages.length === 0 ? (
                 <div className="space-y-4">
                   {/* Welcome message */}
-                  <div className="flex gap-3">
-                    <span className="text-2xl flex-shrink-0">🧠</span>
+                  <div className="flex gap-2 justify-start">
                     <div
-                      className="rounded-lg rounded-tl-none px-4 py-3"
+                      className="rounded-2xl rounded-tl-sm px-4 py-2 max-w-[85%]"
                       style={{
-                        background: "rgba(124, 58, 237, 0.15)",
-                        border: "1px solid rgba(124, 58, 237, 0.2)",
+                        background: "rgba(124, 58, 237, 0.25)",
                       }}
                     >
-                      <p className="text-purple-100">
-                        Hi! I&apos;m your speaking coach. Ask me anything about your feedback, score, or how to improve! 😊
+                      <p className="text-purple-100 text-sm">
+                        Hi! 👋 I can help you understand your score. Ask me anything!
                       </p>
                     </div>
                   </div>
 
                   {/* Starter questions */}
-                  <div className="pl-11">
-                    <p className="text-purple-400 text-sm mb-3">Quick questions:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {STARTER_QUESTIONS.map((question) => (
-                        <button
-                          key={question}
-                          onClick={() => handleStarterClick(question)}
-                          className="text-sm px-4 py-2 rounded-full bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30 transition-colors"
-                        >
-                          {question}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {STARTER_QUESTIONS.map((question) => (
+                      <button
+                        key={question}
+                        onClick={() => handleStarterClick(question)}
+                        className="text-xs px-3 py-2 rounded-full bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30 transition-colors"
+                      >
+                        {question}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ) : (
@@ -212,42 +224,36 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
                   {messages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {msg.role === "assistant" && <span className="text-2xl flex-shrink-0">🧠</span>}
                       <div
-                        className={`rounded-lg px-4 py-3 max-w-[80%] ${
+                        className={`rounded-2xl px-4 py-2 max-w-[85%] ${
                           msg.role === "user"
-                            ? "rounded-br-none"
-                            : "rounded-tl-none"
+                            ? "rounded-br-sm"
+                            : "rounded-tl-sm"
                         }`}
                         style={{
                           background: msg.role === "user"
-                            ? "rgba(124, 58, 237, 0.6)"
-                            : "rgba(124, 58, 237, 0.15)",
-                          border: "1px solid rgba(124, 58, 237, 0.2)",
+                            ? "#7c3aed"
+                            : "rgba(124, 58, 237, 0.25)",
                         }}
                       >
-                        <p className="text-purple-100 whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-purple-100 text-sm whitespace-pre-wrap">{msg.content}</p>
                       </div>
                     </div>
                   ))}
 
                   {/* Loading indicator */}
                   {isLoading && (
-                    <div className="flex gap-3">
-                      <span className="text-2xl flex-shrink-0">🧠</span>
+                    <div className="flex justify-start">
                       <div
-                        className="rounded-lg rounded-tl-none px-4 py-3"
-                        style={{
-                          background: "rgba(124, 58, 237, 0.15)",
-                          border: "1px solid rgba(124, 58, 237, 0.2)",
-                        }}
+                        className="rounded-2xl rounded-tl-sm px-4 py-3"
+                        style={{ background: "rgba(124, 58, 237, 0.25)" }}
                       >
-                        <div className="flex gap-1.5">
-                          <span className="w-2.5 h-2.5 bg-purple-400 rounded-full animate-bounce"></span>
-                          <span className="w-2.5 h-2.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                          <span className="w-2.5 h-2.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></span>
+                          <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                          <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                         </div>
                       </div>
                     </div>
@@ -258,27 +264,41 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
               )}
             </div>
 
-            {/* Input Area */}
+            {/* Input Area - WhatsApp style */}
             <div
-              className="px-4 py-3"
-              style={{ borderTop: "1px solid rgba(124, 58, 237, 0.2)" }}
+              className="p-3 flex-shrink-0"
+              style={{ 
+                background: "#1a0a2e",
+                borderTop: "1px solid rgba(124, 58, 237, 0.2)" 
+              }}
             >
-              <form onSubmit={handleSubmit} className="flex gap-3">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask about your feedback..."
-                  disabled={isLoading}
-                  className="flex-1 bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-purple-100 placeholder-purple-400/50 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 disabled:opacity-50"
-                />
+              <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                <div 
+                  className="flex-1 rounded-3xl overflow-hidden"
+                  style={{ background: "#0d0618", border: "1px solid rgba(124, 58, 237, 0.3)" }}
+                >
+                  <textarea
+                    ref={inputRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message..."
+                    disabled={isLoading}
+                    rows={1}
+                    className="w-full bg-transparent px-4 py-3 text-purple-100 placeholder-purple-400/50 focus:outline-none disabled:opacity-50 resize-none text-sm"
+                    style={{ minHeight: "44px", maxHeight: "120px" }}
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={isLoading || !inputValue.trim()}
-                  className="px-5 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                  className="w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-50 transition-colors flex-shrink-0"
+                  style={{ background: "#7c3aed" }}
                 >
-                  Send
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
                 </button>
               </form>
             </div>
