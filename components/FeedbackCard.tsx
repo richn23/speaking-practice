@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import FeedbackChat from "./FeedbackChat";
 
 interface PronunciationData {
   overallScore: number;
@@ -428,9 +429,26 @@ export default function FeedbackCard({
               )}
             </div>
           )}
+
+          {/* Chat with coach */}
+          {scores && transcript && (
+            <FeedbackChat
+              feedbackContext={{
+                transcript: transcript || "",
+                taskTitle: taskTitle,
+                taskInstructions: "",
+                taskPrompt: "",
+                scoreOverall: scoreOverall || 0,
+                performanceLabel: performanceLabel || "",
+                scores: scores,
+                corrections: corrections || [],
+                vocabularyTip: vocabularyTip || "",
+                strength: strength || "",
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
-
