@@ -139,8 +139,7 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
         <button
           onClick={() => setIsOpen(true)}
           style={{
-            width: "calc(100vw - 40px)",
-            maxWidth: 350,
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -165,7 +164,8 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
             position: "fixed",
             bottom: 20,
             right: 20,
-            width: 350,
+            width: "calc(100vw - 40px)",
+            maxWidth: 350,
             height: 450,
             background: "#1a0a2e",
             border: "1px solid rgba(124, 58, 237, 0.4)",
