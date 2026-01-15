@@ -131,7 +131,7 @@ export default function FeedbackCard({
       <div
         id={`feedback-${taskId}`}
         style={{
-          maxHeight: open ? 1000 : 0,
+          maxHeight: open ? "none" : 0,
           opacity: open ? 1 : 0,
           transition: "max-height 300ms ease, opacity 300ms ease",
         }}
