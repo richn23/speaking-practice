@@ -76,6 +76,18 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  // Prevent body scroll when chat is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
 
@@ -157,16 +169,17 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
         </button>
       </div>
 
-      {/* Floating Chat Widget - bottom right */}
+      {/* Floating Chat Widget */}
       {isOpen && (
         <div
           style={{
             position: "fixed",
-            bottom: 20,
-            right: 20,
-            width: "calc(100vw - 40px)",
+            bottom: 10,
+            left: 10,
+            right: 10,
             maxWidth: 350,
-            height: 450,
+            marginLeft: "auto",
+            height: 400,
             background: "#1a0a2e",
             border: "1px solid rgba(124, 58, 237, 0.4)",
             borderRadius: 16,
@@ -347,7 +360,7 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
                 borderRadius: 24,
                 padding: "10px 16px",
                 color: "#e9e4f0",
-                fontSize: "0.9rem",
+                fontSize: "16px",
                 outline: "none",
               }}
             />
