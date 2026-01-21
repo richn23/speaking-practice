@@ -166,7 +166,8 @@ export default function LongTalkTask({ task, onComplete, isRetry = false }: Long
     if (timeLeft <= 30) return "#f59e0b"; // Amber
     
     // Normal progress based on target time
-    const ratio = task.expectedMinSeconds > 0 ? elapsedSeconds / task.expectedMinSeconds : 0;
+    const minSeconds = task.expectedMinSeconds ?? 45;
+    const ratio = minSeconds > 0 ? elapsedSeconds / minSeconds : 0;
     if (ratio < 0.6) return "#dc2626";
     if (ratio < 1) return "#f59e0b";
     return "#34d399";

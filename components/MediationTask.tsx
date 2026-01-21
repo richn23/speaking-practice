@@ -190,7 +190,8 @@ export default function MediationTask({ task, onComplete, isRetry = false }: Med
     if (timeLeft <= WARNING_SECONDS) return "#ef4444";
     if (timeLeft <= 30) return "#f59e0b";
     
-    const ratio = task.expectedMinSeconds > 0 ? elapsedSeconds / task.expectedMinSeconds : 0;
+    const minSeconds = task.expectedMinSeconds ?? 30;
+    const ratio = minSeconds > 0 ? elapsedSeconds / minSeconds : 0;
     if (ratio < 0.6) return "#dc2626";
     if (ratio < 1) return "#f59e0b";
     return "#34d399";
