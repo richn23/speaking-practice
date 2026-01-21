@@ -33,8 +33,8 @@ export default function ThisOrThatTask({ task, onComplete, isRetry = false }: Th
   const totalPairs = items.length;
   const currentItem = items[currentPairIndex];
   
-  const countdownSeconds = task.countdownSeconds ?? 3;
-  const speakingSecondsPerItem = task.speakingSecondsPerItem ?? 30;
+  const countdownSeconds = 3;
+const speakingSecondsPerItem = 30;
 
   // Recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
