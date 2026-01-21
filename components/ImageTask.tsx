@@ -147,7 +147,8 @@ export default function ImageTask({ task, onComplete, isRetry = false }: ImageTa
     if (timeLeft <= WARNING_SECONDS) return "#ef4444";
     if (timeLeft <= 30) return "#f59e0b";
     
-    const ratio = task.expectedMinSeconds > 0 ? elapsedSeconds / task.expectedMinSeconds : 0;
+    const minSeconds = task.expectedMinSeconds ?? 30;
+    const ratio = minSeconds > 0 ? elapsedSeconds / minSeconds : 0;
     if (ratio < 0.6) return "#dc2626";
     if (ratio < 1) return "#f59e0b";
     return "#34d399";
@@ -190,7 +191,7 @@ export default function ImageTask({ task, onComplete, isRetry = false }: ImageTa
             fontSize: "0.85rem",
           }}
         >
-          Target: {task.expectedMinSeconds}-{task.expectedMaxSeconds}s
+          Target: {task.expectedMinSeconds ?? 30}-{task.expectedMaxSeconds ?? 60}s
         </div>
         <div style={{ color: "#9f8fc0", fontSize: "0.85rem" }}>
           Max: {Math.floor(MAX_RECORDING_SECONDS / 60)} minutes
