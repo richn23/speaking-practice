@@ -1,513 +1,306 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
-import FeedbackChat from "./FeedbackChat";
-import type { Task } from "@/data/unit1";
+import { ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+import type { SkillType, FunctionType } from "@/lib/scoring-types";
 
-interface PronunciationData {
-  overallScore: number;
-  fluencyScore?: number;
-  problemWords: Array<{ 
-    word: string; 
-    score: number; 
-    ipa?: string; 
-    problemPhonemes?: string[];
-    heardAs?: string;
-  }>;
-}
-
-function getPronunciationLabel(score: number): { label: string; isGood: boolean } {
-  if (score >= 90) return { label: "Excellent", isGood: true };
-  if (score >= 80) return { label: "Very clear", isGood: true };
-  if (score >= 70) return { label: "Clear", isGood: true };
-  if (score >= 60) return { label: "Mostly clear", isGood: false };
-  return { label: "Needs work", isGood: false };
-}
-
-function getFluencyLabel(score: number): { label: string; isGood: boolean } {
-  if (score >= 90) return { label: "Natural flow", isGood: true };
-  if (score >= 80) return { label: "Good pace", isGood: true };
-  if (score >= 70) return { label: "Steady", isGood: true };
-  if (score >= 60) return { label: "A bit hesitant", isGood: false };
-  return { label: "Work on your flow", isGood: false };
-}
-
-// Criteria configuration per task type
-const taskCriteriaConfig: Record<Task["taskType"], {
-  criteria: string[];
-  scoreKeys: string[];
-}> = {
-  qa: {
-    criteria: ["Task Achievement", "Elaboration", "Range", "Accuracy"],
-    scoreKeys: ["taskCompletion", "elaboration", "vocabulary", "grammar"],
-  },
-  long_talk: {
-    criteria: ["Task Achievement", "Elaboration", "Cohesion", "Range", "Accuracy"],
-    scoreKeys: ["taskCompletion", "elaboration", "coherence", "vocabulary", "grammar"],
-  },
-  mediation: {
-    criteria: ["Task Achievement", "Comprehension", "Cohesion", "Range", "Accuracy"],
-    scoreKeys: ["taskCompletion", "comprehension", "coherence", "vocabulary", "grammar"],
-  },
-  image: {
-    criteria: ["Task Achievement", "Elaboration", "Cohesion", "Range", "Accuracy"],
-    scoreKeys: ["taskCompletion", "elaboration", "coherence", "vocabulary", "grammar"],
-  },
-  this_or_that: {
-    criteria: ["Task Achievement", "Elaboration", "Fluency", "Range", "Accuracy"],
-    scoreKeys: ["taskCompletion", "elaboration", "fluency", "vocabulary", "grammar"],
-  },
-  gateway: {
-    criteria: ["Task Achievement", "Elaboration", "Cohesion", "Range", "Accuracy"],
-    scoreKeys: ["taskCompletion", "elaboration", "coherence", "vocabulary", "grammar"],
-  },
+// Skill display names and colors
+const skillDisplay: Record<SkillType, { label: string; color: string }> = {
+  range: { label: "Range", color: "#8b5cf6" },        // Purple
+  accuracy: { label: "Accuracy", color: "#3b82f6" },  // Blue
+  fluency: { label: "Fluency", color: "#10b981" },    // Green
+  coherence: { label: "Coherence", color: "#f59e0b" }, // Amber
+  interaction: { label: "Interaction", color: "#ec4899" }, // Pink
 };
 
-// Flexible scores type - all optional since different task types return different keys
-type FeedbackScores = {
-  taskCompletion?: number;
-  elaboration?: number;
-  coherence?: number;      // long_talk, image, gateway
-  comprehension?: number;  // mediation
-  fluency?: number;        // this_or_that
-  grammar?: number;
-  vocabulary?: number;
+// Function display names
+const functionDisplay: Record<FunctionType, { label: string; icon: string }> = {
+  describing: { label: "Describing", icon: "🖼️" },
+  narrating: { label: "Narrating", icon: "📖" },
+  informing: { label: "Informing", icon: "💬" },
+  mediating: { label: "Mediating", icon: "🔄" },
+  opinion: { label: "Opinion", icon: "💭" },
 };
 
-type FeedbackCardProps = {
-  taskId: string;
+interface FeedbackCardProps {
+  taskType: string;
   taskTitle: string;
-  taskType: Task["taskType"];
-  transcript?: string;
-  scores?: FeedbackScores;
-  scoreOverall?: number;
-  performanceLabel?: string;
-  corrections?: {
+  function: FunctionType;
+  secondaryFunction?: FunctionType;
+  skills: Record<string, number>;
+  overall: number;
+  transcript: string;
+  corrections: Array<{
     original: string;
     corrected: string;
     explanation: string;
-  }[];
-  vocabularyTip?: string;
-  stretchSuggestion?: string;
-  strength?: string;
-  pronunciationData?: PronunciationData;
-};
+  }>;
+  strengths: string[];
+  improvements: string[];
+  feedback: string;
+  onChatOpen?: () => void;
+}
 
 export default function FeedbackCard({
-  taskId,
-  taskTitle,
   taskType,
+  taskTitle,
+  function: primaryFunction,
+  secondaryFunction,
+  skills,
+  overall,
   transcript,
-  scoreOverall,
-  performanceLabel,
-  scores,
   corrections,
-  vocabularyTip,
-  stretchSuggestion,
-  strength,
-  pronunciationData,
+  strengths,
+  improvements,
+  feedback,
+  onChatOpen,
 }: FeedbackCardProps) {
-  const [open, setOpen] = useState(true);
-  const [playingWord, setPlayingWord] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
 
-  const toggle = () => setOpen((v) => !v);
-
-  const playPronunciation = async (word: string) => {
-    setPlayingWord(word);
-    try {
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word }),
-      });
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audio.onended = () => setPlayingWord(null);
-      audio.play();
-    } catch (error) {
-      console.error("TTS playback error:", error);
-      setPlayingWord(null);
-    }
+  // Get score color
+  const getScoreColor = (score: number, max: number = 5) => {
+    const pct = score / max;
+    if (pct >= 0.8) return "#22c55e"; // Green
+    if (pct >= 0.6) return "#eab308"; // Yellow
+    if (pct >= 0.4) return "#f97316"; // Orange
+    return "#ef4444"; // Red
   };
 
-  // Get the criteria config for this task type
-  console.log("[FeedbackCard] taskType received:", taskType);
-  const config = taskCriteriaConfig[taskType] || taskCriteriaConfig.long_talk;
-  console.log("[FeedbackCard] Using config:", config.criteria);
-
-  // Build the score items to display based on task type
-  const getScoreItems = () => {
-    if (!scores) return [];
-    
-    return config.criteria.map((label, index) => {
-      const key = config.scoreKeys[index] as keyof FeedbackScores;
-      return {
-        label,
-        value: scores[key] ?? 0,
-      };
-    });
+  // Score bar component
+  const SkillBar = ({ skill, score }: { skill: string; score: number }) => {
+    const display = skillDisplay[skill as SkillType] || { label: skill, color: "#9ca3af" };
+    return (
+      <div style={{ marginBottom: "0.75rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+          <span style={{ color: "#d1d5db", fontSize: "0.875rem" }}>{display.label}</span>
+          <span style={{ color: getScoreColor(score), fontWeight: 600 }}>{score}/5</span>
+        </div>
+        <div style={{ 
+          height: "8px", 
+          background: "rgba(255,255,255,0.1)", 
+          borderRadius: "4px",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            height: "100%",
+            width: `${(score / 5) * 100}%`,
+            background: display.color,
+            borderRadius: "4px",
+            transition: "width 0.5s ease"
+          }} />
+        </div>
+      </div>
+    );
   };
-
-  const scoreItems = getScoreItems();
 
   return (
-    <div
-      style={{
-        background: "rgba(30, 15, 45, 0.7)",
-        backdropFilter: "blur(12px)",
-        border: "1px solid rgba(124, 58, 237, 0.2)",
-        borderRadius: 12,
-        marginTop: "0.75rem",
-        overflow: "hidden",
-      }}
-    >
-      <button
-        type="button"
-        onClick={toggle}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0.9rem 1rem",
-          background: "transparent",
-          border: "none",
-          color: "#e9e4f0",
-          cursor: "pointer",
-        }}
-        aria-expanded={open}
-        aria-controls={`feedback-${taskId}`}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 600 }}>
-          <Check size={18} color="#34d399" />
-          <span>Feedback: {taskTitle}</span>
-        </div>
-        {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-      </button>
-
-      <div
-        id={`feedback-${taskId}`}
-        style={{
-          maxHeight: open ? "none" : 0,
-          opacity: open ? 1 : 0,
-          transition: "max-height 300ms ease, opacity 300ms ease",
-        }}
-      >
-        <div style={{ padding: "0.75rem 1rem 1rem 1rem", color: "#e9e4f0", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          {typeof scoreOverall === "number" && performanceLabel && (
-            <div
-              style={{
-                background: "rgba(124, 58, 237, 0.08)",
-                borderRadius: 10,
-                padding: "0.85rem",
-                border: "1px solid rgba(124, 58, 237, 0.2)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                gap: "0.35rem",
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "var(--font-heading), 'Orbitron', system-ui, sans-serif",
-                  fontSize: "2rem",
-                  color: "#a78bfa",
-                  fontWeight: 800,
-                  letterSpacing: "0.03em",
-                }}
-              >
-                {Math.round(scoreOverall)}/100
-              </div>
-              <div style={{ color: "#9f8fc0", fontWeight: 700 }}>{performanceLabel}</div>
-            </div>
-          )}
-
-          <div
-            style={{
-              background: "rgba(20, 10, 30, 0.6)",
-              borderRadius: 10,
-              padding: "0.75rem",
-              border: "1px solid rgba(124, 58, 237, 0.15)",
-            }}
-          >
-            <div style={{ fontWeight: 700, marginBottom: "0.4rem", color: "#e9e4f0" }}>
-              What you said:
-            </div>
-            <div
-              style={{
-                color: "#9f8fc0",
-                lineHeight: 1.5,
-                borderLeft: "3px solid rgba(124, 58, 237, 0.4)",
-                paddingLeft: "0.6rem",
-                fontStyle: "italic",
-              }}
-            >
-              {transcript && transcript.trim().length > 0
-                ? transcript
-                : "Sorry, the audio was unclear or too short. Please try to record again."}
-            </div>
+    <div style={{
+      background: "linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(20, 15, 35, 0.98))",
+      borderRadius: "16px",
+      padding: "1.5rem",
+      border: "1px solid rgba(139, 92, 246, 0.3)",
+      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+    }}>
+      {/* Header */}
+      <div style={{ marginBottom: "1.25rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ color: "#e9e4f0", fontWeight: 700, fontSize: "1.1rem", margin: 0 }}>
+            {taskTitle}
+          </h3>
+          <div style={{
+            background: `linear-gradient(135deg, ${getScoreColor(overall, 100)}, ${getScoreColor(overall, 100)}88)`,
+            padding: "0.5rem 1rem",
+            borderRadius: "999px",
+            fontWeight: 800,
+            color: "#fff",
+            fontSize: "1.1rem",
+          }}>
+            {overall}%
           </div>
-
-          {scores && scoreItems.length > 0 && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-                gap: "0.5rem",
-              }}
-            >
-              {scoreItems.map((item) => (
-                <div
-                  key={item.label}
-                  style={{
-                    background: "rgba(20, 10, 30, 0.6)",
-                    borderRadius: 10,
-                    padding: "0.65rem",
-                    border: "1px solid rgba(124, 58, 237, 0.12)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.2rem",
-                  }}
-                >
-                  <div style={{ color: "#9f8fc0", fontSize: "0.85rem" }}>{item.label}</div>
-                  <div
-                    style={{
-                      color: "#e9e4f0",
-                      fontWeight: 700,
-                      fontSize: "1.1rem",
-                    }}
-                  >
-                    {item.value}/5
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {corrections && corrections.length > 0 && (
-            <div
-              style={{
-                background: "rgba(20, 10, 30, 0.6)",
-                borderRadius: 10,
-                padding: "0.75rem",
-                border: "1px solid rgba(124, 58, 237, 0.12)",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: "0.5rem", color: "#e9e4f0" }}>
-                Corrections
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-                {corrections.map((c, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      background: "rgba(124, 58, 237, 0.08)",
-                      borderRadius: 8,
-                      padding: "0.65rem",
-                      border: "1px solid rgba(124, 58, 237, 0.1)",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.25rem",
-                    }}
-                  >
-                    <div style={{ color: "#9f8fc0", fontSize: "0.9rem" }}>
-                      You said: <span style={{ color: "#9f9fb5" }}>{c.original}</span>
-                    </div>
-                    <div style={{ color: "#34d399", fontWeight: 700 }}>Try: {c.corrected}</div>
-                    <div style={{ color: "#9f8fc0", fontSize: "0.85rem" }}>{c.explanation}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {vocabularyTip && (
-            <div
-              style={{
-                background: "rgba(20, 10, 30, 0.6)",
-                borderRadius: 10,
-                padding: "0.75rem",
-                border: "1px solid rgba(124, 58, 237, 0.12)",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: "0.35rem", color: "#e9e4f0" }}>
-                Vocabulary tip
-              </div>
-              <div style={{ color: "#e9e4f0", lineHeight: 1.5 }}>{vocabularyTip}</div>
-            </div>
-          )}
-
-          {stretchSuggestion && (
-            <div
-              style={{
-                background: "rgba(20, 10, 30, 0.6)",
-                borderRadius: 10,
-                padding: "0.75rem",
-                border: "1px solid rgba(124, 58, 237, 0.12)",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: "0.35rem", color: "#e9e4f0" }}>
-                Stretch suggestion
-              </div>
-              <div style={{ color: "#e9e4f0", lineHeight: 1.5 }}>{stretchSuggestion}</div>
-            </div>
-          )}
-
-          {strength && (
-            <div
-              style={{
-                background: "rgba(20, 10, 30, 0.6)",
-                borderRadius: 10,
-                padding: "0.75rem",
-                border: "1px solid rgba(124, 58, 237, 0.12)",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: "0.35rem", color: "#e9e4f0" }}>
-                Strength
-              </div>
-              <div style={{ color: "#34d399", lineHeight: 1.5 }}>{strength}</div>
-            </div>
-          )}
-
-          {pronunciationData && (
-            <div
-              style={{
-                background: "rgba(20, 10, 30, 0.6)",
-                borderRadius: 10,
-                padding: "0.75rem",
-                border: "1px solid rgba(124, 58, 237, 0.12)",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: "0.5rem", color: "#e9e4f0" }}>
-                Pronunciation & Fluency
-              </div>
-              
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginBottom: pronunciationData.problemWords.length > 0 ? "0.75rem" : 0 }}>
-                {(() => {
-                  const pronLabel = getPronunciationLabel(pronunciationData.overallScore);
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ color: "#9f8fc0" }}>Pronunciation:</span>
-                      <span style={{ color: pronLabel.isGood ? "#34d399" : "#fbbf24", fontWeight: 600 }}>
-                        {pronLabel.label} {pronLabel.isGood && "✓"}
-                      </span>
-                    </div>
-                  );
-                })()}
-                {pronunciationData.fluencyScore !== undefined && (() => {
-                  const fluencyLabel = getFluencyLabel(pronunciationData.fluencyScore);
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ color: "#9f8fc0" }}>Fluency:</span>
-                      <span style={{ color: fluencyLabel.isGood ? "#34d399" : "#fbbf24", fontWeight: 600 }}>
-                        {fluencyLabel.label} {fluencyLabel.isGood && "✓"}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {pronunciationData.problemWords.length > 0 && (
-                <div
-                  style={{
-                    padding: "0.75rem",
-                    borderRadius: 8,
-                    background: "rgba(124, 58, 237, 0.1)",
-                    border: "1px solid rgba(124, 58, 237, 0.15)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.875rem",
-                      color: "#c4b5fd",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    We had trouble understanding these words:
-                  </div>
-                  <ul style={{ display: "flex", flexDirection: "column", gap: "0.75rem", margin: 0, padding: 0, listStyle: "none" }}>
-                    {pronunciationData.problemWords.map((item, index) => (
-                      <li
-                        key={index}
-                        style={{
-                          background: "rgba(20, 10, 30, 0.5)",
-                          borderRadius: 8,
-                          padding: "0.6rem 0.75rem",
-                          border: "1px solid rgba(124, 58, 237, 0.1)",
-                        }}
-                      >
-                        <div style={{ fontWeight: 700, color: "#e9e4f0", marginBottom: "0.4rem", fontSize: "1rem" }}>
-                          {item.word}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.9rem" }}>
-                          {item.heardAs && (
-                            <div style={{ color: "#fbbf24" }}>
-                              <span style={{ color: "#9f8fc0" }}>We heard: </span>
-                              <span style={{ fontFamily: "serif" }}>{item.heardAs}</span>
-                            </div>
-                          )}
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <span style={{ color: "#9f8fc0" }}>Target: </span>
-                            {item.ipa ? (
-                              <span style={{ color: "#34d399", fontFamily: "serif" }}>{item.ipa}</span>
-                            ) : (
-                              <span style={{ color: "#9f8fc0", fontStyle: "italic" }}>loading...</span>
-                            )}
-                            <button
-                              onClick={() => playPronunciation(item.word)}
-                              disabled={playingWord === item.word}
-                              style={{
-                                padding: "0.2rem 0.4rem",
-                                background: playingWord === item.word ? "rgba(124, 58, 237, 0.25)" : "rgba(124, 58, 237, 0.1)",
-                                border: "1px solid rgba(124, 58, 237, 0.3)",
-                                borderRadius: 6,
-                                cursor: playingWord === item.word ? "default" : "pointer",
-                                transition: "background 150ms ease",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.25rem",
-                              }}
-                              title="Hear correct pronunciation"
-                            >
-                              {playingWord === item.word ? (
-                                <span style={{ color: "#a78bfa", fontSize: "0.75rem" }}>Playing...</span>
-                              ) : (
-                                <span style={{ fontSize: "0.9rem" }}>🔊</span>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Chat with coach */}
-          {scores && transcript && (
-            <FeedbackChat
-              taskType={taskType}
-              feedbackContext={{
-                transcript: transcript || "",
-                taskTitle: taskTitle,
-                taskInstructions: "",
-                taskPrompt: "",
-                scoreOverall: scoreOverall || 0,
-                performanceLabel: performanceLabel || "",
-                scores: scores,
-                corrections: corrections || [],
-                vocabularyTip: vocabularyTip || "",
-                strength: strength || "",
-                pronunciationData: pronunciationData,
-              }}
-            />
+        </div>
+        
+        {/* Function badges */}
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+          <span style={{
+            background: "rgba(139, 92, 246, 0.2)",
+            border: "1px solid rgba(139, 92, 246, 0.4)",
+            padding: "0.25rem 0.75rem",
+            borderRadius: "999px",
+            fontSize: "0.75rem",
+            color: "#c4b5fd",
+          }}>
+            {functionDisplay[primaryFunction]?.icon} {functionDisplay[primaryFunction]?.label}
+          </span>
+          {secondaryFunction && (
+            <span style={{
+              background: "rgba(59, 130, 246, 0.2)",
+              border: "1px solid rgba(59, 130, 246, 0.4)",
+              padding: "0.25rem 0.75rem",
+              borderRadius: "999px",
+              fontSize: "0.75rem",
+              color: "#93c5fd",
+            }}>
+              {functionDisplay[secondaryFunction]?.icon} {functionDisplay[secondaryFunction]?.label}
+            </span>
           )}
         </div>
       </div>
+
+      {/* Skill Scores */}
+      <div style={{ marginBottom: "1.25rem" }}>
+        <h4 style={{ color: "#a78bfa", fontSize: "0.875rem", marginBottom: "0.75rem", fontWeight: 600 }}>
+          Skill Breakdown
+        </h4>
+        {Object.entries(skills).map(([skill, score]) => (
+          <SkillBar key={skill} skill={skill} score={score as number} />
+        ))}
+      </div>
+
+      {/* Feedback Summary */}
+      <div style={{
+        background: "rgba(139, 92, 246, 0.1)",
+        borderRadius: "12px",
+        padding: "1rem",
+        marginBottom: "1rem",
+        border: "1px solid rgba(139, 92, 246, 0.2)",
+      }}>
+        <p style={{ color: "#e9e4f0", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 }}>
+          {feedback}
+        </p>
+      </div>
+
+      {/* Strengths */}
+      {strengths.length > 0 && (
+        <div style={{ marginBottom: "1rem" }}>
+          <h4 style={{ color: "#22c55e", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+            ✓ Strengths
+          </h4>
+          <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "#d1d5db" }}>
+            {strengths.map((s, i) => (
+              <li key={i} style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Areas to improve */}
+      {improvements.length > 0 && (
+        <div style={{ marginBottom: "1rem" }}>
+          <h4 style={{ color: "#f59e0b", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+            ↑ Areas to Improve
+          </h4>
+          <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "#d1d5db" }}>
+            {improvements.map((s, i) => (
+              <li key={i} style={{ fontSize: "0.875rem", marginBottom: "0.25rem" }}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Expandable: Corrections */}
+      {corrections.length > 0 && (
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "0.75rem",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "8px",
+            color: "#d1d5db",
+            cursor: "pointer",
+            marginBottom: "0.75rem",
+          }}
+        >
+          <span>Language Corrections ({corrections.length})</span>
+          {showDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </button>
+      )}
+      
+      {showDetails && corrections.length > 0 && (
+        <div style={{ 
+          background: "rgba(239, 68, 68, 0.1)", 
+          borderRadius: "8px", 
+          padding: "1rem",
+          marginBottom: "0.75rem",
+          border: "1px solid rgba(239, 68, 68, 0.2)",
+        }}>
+          {corrections.map((c, i) => (
+            <div key={i} style={{ marginBottom: i < corrections.length - 1 ? "0.75rem" : 0 }}>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <span style={{ color: "#fca5a5", textDecoration: "line-through" }}>"{c.original}"</span>
+                <span style={{ color: "#9ca3af" }}>→</span>
+                <span style={{ color: "#86efac" }}>"{c.corrected}"</span>
+              </div>
+              <p style={{ color: "#9ca3af", fontSize: "0.8rem", margin: "0.25rem 0 0 0" }}>
+                {c.explanation}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Expandable: Transcript */}
+      <button
+        onClick={() => setShowTranscript(!showTranscript)}
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "0.75rem",
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "8px",
+          color: "#d1d5db",
+          cursor: "pointer",
+          marginBottom: "0.75rem",
+        }}
+      >
+        <span>What you said</span>
+        {showTranscript ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+      </button>
+
+      {showTranscript && (
+        <div style={{
+          background: "rgba(255,255,255,0.05)",
+          borderRadius: "8px",
+          padding: "1rem",
+          marginBottom: "0.75rem",
+        }}>
+          <p style={{ color: "#d1d5db", fontSize: "0.875rem", fontStyle: "italic", margin: 0, lineHeight: 1.6 }}>
+            "{transcript}"
+          </p>
+        </div>
+      )}
+
+      {/* Chat button */}
+      {onChatOpen && (
+        <button
+          onClick={onChatOpen}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            padding: "0.75rem",
+            background: "linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3))",
+            border: "1px solid rgba(139, 92, 246, 0.4)",
+            borderRadius: "8px",
+            color: "#e9e4f0",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          <MessageCircle size={18} />
+          Questions about your feedback? Ask me!
+        </button>
+      )}
     </div>
   );
 }

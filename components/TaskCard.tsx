@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Task } from "@/data/unit1";
+import type { FunctionType, SkillType } from "@/lib/scoring-types";
 import { Lock, Check } from "lucide-react";
 
 // Task-specific components
@@ -10,16 +11,41 @@ import LongTalkTask from "@/components/LongTalkTask";
 import MediationTask from "@/components/MediationTask";
 import ImageTask from "@/components/ImageTask";
 import ThisOrThatTask from "@/components/ThisOrThatTask";
+import GatewayTask from "@/components/GatewayTask";
 
-// Flexible scores type - different task types return different keys
-type FeedbackScores = {
-  taskCompletion?: number;
-  elaboration?: number;
-  coherence?: number;      // long_talk, image, gateway
-  comprehension?: number;  // mediation
-  fluency?: number;        // this_or_that
-  grammar?: number;
-  vocabulary?: number;
+// New feedback structure with Functions + Skills
+type TaskFeedback = {
+  // New scoring model
+  function: FunctionType;
+  secondaryFunction?: FunctionType;
+  skills: Partial<Record<SkillType, number>>;
+  overall: number;
+  
+  // Feedback content
+  corrections?: {
+    original: string;
+    corrected: string;
+    explanation: string;
+  }[];
+  strengths?: string[];
+  improvements?: string[];
+  feedback?: string;
+  
+  // Pronunciation (if available)
+  pronunciationData?: {
+    overallScore: number;
+    fluencyScore?: number;
+    problemWords: Array<{
+      word: string;
+      score: number;
+      ipa?: string;
+      problemPhonemes?: string[];
+      heardAs?: string;
+    }>;
+  };
+  
+  // Error handling
+  invalidReason?: string;
 };
 
 type TaskCardProps = {
@@ -30,24 +56,7 @@ type TaskCardProps = {
     taskId: string,
     isRetry?: boolean,
     transcript?: string,
-    feedback?: {
-      scoreOverall?: number;
-      performanceLabel?: string;
-      scores?: FeedbackScores;
-      corrections?: {
-        original: string;
-        corrected: string;
-        explanation: string;
-      }[];
-      vocabularyTip?: string;
-      stretchSuggestion?: string;
-      strength?: string;
-      pronunciationData?: {
-        overallScore: number;
-        fluencyScore?: number;
-        problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[]; heardAs?: string }>;
-      };
-    }
+    feedback?: TaskFeedback
   ) => void;
 };
 
@@ -152,48 +161,43 @@ export default function TaskCard({
         console.warn("Pronunciation assessment failed; continuing without it", pronError);
       }
 
-      // Generate feedback
+      // Generate feedback (new API returns function + skills)
       setSubmissionStatus("Almost done...");
       const fbResponse = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          taskId: task.id,
+          transcript,
           taskType: task.taskType,
           taskTitle: task.title,
-          taskInstructions: task.instructions,
-          taskPrompt: task.prompt,
-          taskItems: task.items,
-          transcript,
+          prompt: task.prompt || task.instructions,
+          expectedMinSeconds: task.expectedMinSeconds,
+          expectedMaxSeconds: task.expectedMaxSeconds,
         }),
       });
       const fbJson = await fbResponse.json();
       
-      // Check for recording error from API
+      // Check for error from API
       if (fbJson.error) {
         console.error("Feedback failed:", fbJson.error);
         setSubmissionStatus("");
         setSubmissionError(fbJson.error);
         return;
       }
-      
-      const feedback = fbJson.feedback;
-      
-      if (!feedback) {
-        console.error("Feedback failed: no feedback returned");
-        setSubmissionStatus("");
-        setSubmissionError("There was a problem generating feedback. Please try again.");
-        return;
-      }
 
-      // Check if the feedback indicates an invalid recording
-      if (feedback.invalidReason) {
-        setSubmissionStatus("");
-        setSubmissionError(feedback.invalidReason);
-        return;
-      }
+      // Build feedback object from new API response
+      const feedback: TaskFeedback = {
+        function: fbJson.function,
+        secondaryFunction: fbJson.secondaryFunction,
+        skills: fbJson.skills,
+        overall: fbJson.overall,
+        corrections: fbJson.corrections || [],
+        strengths: fbJson.strengths || [],
+        improvements: fbJson.improvements || [],
+        feedback: fbJson.feedback || "",
+      };
 
-      // Add pronunciation data to feedback
+      // Add pronunciation data if available
       if (pronunciationData) {
         feedback.pronunciationData = pronunciationData;
       }
@@ -268,11 +272,12 @@ export default function TaskCard({
           />
         );
       case "gateway":
-        // TODO: Create GatewayTask component
         return (
-          <div style={{ color: "#9f8fc0" }}>
-            Gateway task coming soon...
-          </div>
+          <GatewayTask
+            task={task}
+            onComplete={handleTaskComplete}
+            isRetry={isCompleted}
+          />
         );
       default:
         return null;

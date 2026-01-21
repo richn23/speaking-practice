@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     // Only flag words that are truly problematic, don't nitpick good-enough pronunciation
     const words: WordResult[] = nBest.Words || [];
     const problemWords: ProblemWord[] = [];
-    const WORD_THRESHOLD = 70;           // Flag words scoring below this
+    const WORD_THRESHOLD = 60;           // Flag words scoring below this (lowered from 70 to reduce false positives)
     const PHONEME_THRESHOLD = 40;        // Only show really problematic phonemes (< 40)
 
     words.forEach((word: WordResult) => {
