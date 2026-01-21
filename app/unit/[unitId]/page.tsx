@@ -5,36 +5,34 @@ import FeedbackCard from "@/components/FeedbackCard";
 import TaskCard from "@/components/TaskCard";
 import UnitHeader from "@/components/UnitHeader";
 import UnitIntro from "@/components/UnitIntro";
-import UnitComplete from "@/components/UnitComplete";
+import UnitReport from "@/components/UnitReport";
 import { unit1 } from "@/data/unit1";
+import type { FunctionType, SkillType, TaskScore } from "@/lib/scoring-types";
 
-// Flexible scores type - different task types return different keys
-type FeedbackScores = {
-  taskCompletion?: number;
-  elaboration?: number;
-  coherence?: number;      // long_talk, image, gateway
-  comprehension?: number;  // mediation
-  fluency?: number;        // this_or_that
-  grammar?: number;
-  vocabulary?: number;
-};
-
+// New feedback structure with Functions + Skills
 type FeedbackData = {
-  scoreOverall?: number;
-  performanceLabel?: string;
-  scores?: FeedbackScores;
+  function: FunctionType;
+  secondaryFunction?: FunctionType;
+  skills: Partial<Record<SkillType, number>>;
+  overall: number;
   corrections?: {
     original: string;
     corrected: string;
     explanation: string;
   }[];
-  vocabularyTip?: string;
-  stretchSuggestion?: string;
-  strength?: string;
+  strengths?: string[];
+  improvements?: string[];
+  feedback?: string;
   pronunciationData?: {
     overallScore: number;
     fluencyScore?: number;
-    problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[]; heardAs?: string }>;
+    problemWords: Array<{
+      word: string;
+      score: number;
+      ipa?: string;
+      problemPhonemes?: string[];
+      heardAs?: string;
+    }>;
   };
 };
 
@@ -76,6 +74,29 @@ export default function UnitPage() {
   const completedCount = tasks.filter((t) => completedTaskIds.includes(t.id)).length;
   const totalCount = tasks.length;
 
+  // Build TaskScore array for UnitReport
+  const taskScores: TaskScore[] = completedTaskIds
+    .map((taskId) => {
+      const feedback = feedbacks[taskId];
+      const transcript = transcripts[taskId];
+      const task = tasks.find((t) => t.id === taskId);
+      if (!feedback || !task) return null;
+
+      return {
+        taskId,
+        taskType: task.taskType,
+        function: feedback.function,
+        secondaryFunction: feedback.secondaryFunction,
+        skills: feedback.skills as Record<SkillType, number>,
+        overall: feedback.overall,
+        transcript: transcript || "",
+        corrections: feedback.corrections || [],
+        strengths: feedback.strengths || [],
+        improvements: feedback.improvements || [],
+      };
+    })
+    .filter((t): t is TaskScore => t !== null);
+
   return (
     <main
       style={{
@@ -108,6 +129,8 @@ export default function UnitPage() {
         {tasks.map((task, idx) => {
           const locked = isTaskLocked(idx);
           const completed = completedTaskIds.includes(task.id);
+          const feedback = feedbacks[task.id];
+
           return (
             <div key={task.id} style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
               <TaskCard
@@ -116,28 +139,32 @@ export default function UnitPage() {
                 isCompleted={completed}
                 onComplete={handleComplete}
               />
-              {completed && (
+              {completed && feedback && (
                 <FeedbackCard
-                  taskId={task.id}
-                  taskTitle={task.title}
                   taskType={task.taskType}
-                  transcript={transcripts[task.id]}
-                  scoreOverall={feedbacks[task.id]?.scoreOverall}
-                  performanceLabel={feedbacks[task.id]?.performanceLabel}
-                  scores={feedbacks[task.id]?.scores}
-                  corrections={feedbacks[task.id]?.corrections}
-                  vocabularyTip={feedbacks[task.id]?.vocabularyTip}
-                  stretchSuggestion={feedbacks[task.id]?.stretchSuggestion}
-                  strength={feedbacks[task.id]?.strength}
-                  pronunciationData={feedbacks[task.id]?.pronunciationData}
+                  taskTitle={task.title}
+                  function={feedback.function}
+                  secondaryFunction={feedback.secondaryFunction}
+                  skills={feedback.skills}
+                  overall={feedback.overall}
+                  transcript={transcripts[task.id] || ""}
+                  corrections={feedback.corrections || []}
+                  strengths={feedback.strengths || []}
+                  improvements={feedback.improvements || []}
+                  feedback={feedback.feedback || ""}
                 />
               )}
             </div>
           );
         })}
 
-        {completedTaskIds.length === 6 && (
-          <UnitComplete unit={unit1} taskScores={[72, 75, 70, 78, 74, 76]} />
+        {/* Show UnitReport when all tasks complete */}
+        {completedTaskIds.length === tasks.length && (
+          <UnitReport
+            unitTitle={unit1.title}
+            level={unit1.level}
+            tasks={taskScores}
+          />
         )}
       </div>
     </main>
