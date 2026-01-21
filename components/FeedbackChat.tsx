@@ -9,6 +9,17 @@ interface ChatMessage {
   content: string;
 }
 
+// Flexible scores type - all optional since different task types return different keys
+type FeedbackScores = {
+  taskCompletion?: number;
+  elaboration?: number;
+  coherence?: number;      // long_talk, image, gateway
+  comprehension?: number;  // mediation
+  fluency?: number;        // this_or_that
+  grammar?: number;
+  vocabulary?: number;
+};
+
 interface FeedbackContext {
   transcript: string;
   taskTitle: string;
@@ -16,15 +27,7 @@ interface FeedbackContext {
   taskPrompt: string;
   scoreOverall: number;
   performanceLabel: string;
-  scores: {
-    taskCompletion: number;
-    elaboration: number;
-    coherence?: number;
-    comprehension?: number;
-    fluency?: number;
-    grammar: number;
-    vocabulary: number;
-  };
+  scores: FeedbackScores;
   corrections: Array<{
     original: string;
     corrected: string;
