@@ -7,7 +7,7 @@ import UnitHeader from "@/components/UnitHeader";
 import UnitIntro from "@/components/UnitIntro";
 import UnitReport from "@/components/UnitReport";
 import { unit1 } from "@/data/unit1";
-import type { FunctionType, SkillType, TaskScore } from "@/lib/scoring-types";
+import type { FunctionType, SkillType } from "@/lib/scoring-types";
 
 // New feedback structure with Functions + Skills
 type FeedbackData = {
@@ -75,7 +75,7 @@ export default function UnitPage() {
   const totalCount = tasks.length;
 
   // Build TaskScore array for UnitReport
-  const taskScores: TaskScore[] = completedTaskIds
+  const taskScores = completedTaskIds
     .map((taskId) => {
       const feedback = feedbacks[taskId];
       const transcript = transcripts[taskId];
@@ -87,7 +87,7 @@ export default function UnitPage() {
         taskType: task.taskType,
         function: feedback.function,
         secondaryFunction: feedback.secondaryFunction,
-        skills: feedback.skills as Record<SkillType, number>,
+        skills: feedback.skills,
         overall: feedback.overall,
         transcript: transcript || "",
         corrections: feedback.corrections || [],
@@ -95,7 +95,7 @@ export default function UnitPage() {
         improvements: feedback.improvements || [],
       };
     })
-    .filter((t): t is TaskScore => t !== null);
+    .filter((t) => t !== null);
 
   return (
     <main
