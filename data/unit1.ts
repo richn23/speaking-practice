@@ -8,16 +8,20 @@ export type Task = {
   id: string;
   unitId: number;
   orderIndex: number;
-  taskType: "qa" | "long_talk" | "image" | "this_or_that" | "gateway";
+  taskType: "qa" | "long_talk" | "image" | "this_or_that" | "gateway" | "mediation";
   title: string;
   instructions: string;
   prompt?: string;
   imageUrl?: string;
+  audioUrl?: string;
   items?: TaskItem[];
   expectedMinSeconds: number;
   expectedMaxSeconds: number;
   hasAudio: boolean;
   audioEnabled: boolean;
+  countdownSeconds?: number;
+  speakingSecondsPerItem?: number;
+  maxReplays?: number;
 };
 
 export type Unit = {
@@ -91,24 +95,16 @@ export const unit1: Unit = {
       audioEnabled: true,
     },
     {
-      id: "longtalk-b",
+      id: "mediation-1",
       unitId,
       orderIndex: 3,
-      taskType: "long_talk",
-      title: "My Weekend Routine",
-      instructions:
-        "Speak for 45–60 seconds about your typical weekend. Mention morning, afternoon, and evening.",
-      prompt:
-        "Prompt ideas:\n" +
-        "• What time do you usually wake up, and what’s your first thing?\n" +
-        "• Meals or coffee: where, what, and with who?\n" +
-        "• Plans: errands, social time, family time, hobbies\n" +
-        "• Exercise or outdoors: gym, walk, padel, etc.\n" +
-        "• Evening routine: dinner, relaxing, screens/books, bedtime\n" +
-        "• One thing you always do + one thing that changes week to week\n" +
-        "Challenge: Try to use at least 3 connectors (e.g., usually, then, after that, because, so).",
-      expectedMinSeconds: 45,
-      expectedMaxSeconds: 60,
+      taskType: "mediation",
+      title: "Listen & Summarise",
+      instructions: "Listen to three people talking about their daily routines. You can replay the audio once. Take notes if you wish. Then summarise what you heard.",
+      audioUrl: "/audio/unit1/mediation-1.mp3",
+      maxReplays: 1,
+      expectedMinSeconds: 30,
+      expectedMaxSeconds: 90,
       hasAudio: true,
       audioEnabled: true,
     },
@@ -132,17 +128,19 @@ export const unit1: Unit = {
       orderIndex: 5,
       taskType: "this_or_that",
       title: "Quick Opinions",
-      instructions: "Give a quick opinion (2–3 sentences) for each choice.",
+      instructions: "You'll see two options. Give your choice and a quick reason. No prep time - just speak!",
       items: [
         { id: "tot-1-q1", orderIndex: 1, promptText: "Staying home or going out?" },
         { id: "tot-1-q2", orderIndex: 2, promptText: "Coffee or tea?" },
         { id: "tot-1-q3", orderIndex: 3, promptText: "Working alone or working with others?" },
-        { id: "tot-1-q4", orderIndex: 4, promptText: "Studying in the morning or at night?" },
+        { id: "tot-1-q4", orderIndex: 4, promptText: "Morning person or night owl?" },
         { id: "tot-1-q5", orderIndex: 5, promptText: "Eating at home or eating out?" },
       ],
-      expectedMinSeconds: 20,
-      expectedMaxSeconds: 40,
-      hasAudio: true,
+      countdownSeconds: 3,
+      speakingSecondsPerItem: 30,
+      expectedMinSeconds: 150,
+      expectedMaxSeconds: 175,
+      hasAudio: false,
       audioEnabled: false,
     },
     {
@@ -160,4 +158,3 @@ export const unit1: Unit = {
     },
   ],
 };
-

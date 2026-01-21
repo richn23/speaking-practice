@@ -8,38 +8,40 @@ import UnitIntro from "@/components/UnitIntro";
 import UnitComplete from "@/components/UnitComplete";
 import { unit1 } from "@/data/unit1";
 
+// Flexible scores type - different task types return different keys
+type FeedbackScores = {
+  taskCompletion?: number;
+  elaboration?: number;
+  coherence?: number;      // long_talk, image, gateway
+  comprehension?: number;  // mediation
+  fluency?: number;        // this_or_that
+  grammar?: number;
+  vocabulary?: number;
+};
+
+type FeedbackData = {
+  scoreOverall?: number;
+  performanceLabel?: string;
+  scores?: FeedbackScores;
+  corrections?: {
+    original: string;
+    corrected: string;
+    explanation: string;
+  }[];
+  vocabularyTip?: string;
+  stretchSuggestion?: string;
+  strength?: string;
+  pronunciationData?: {
+    overallScore: number;
+    fluencyScore?: number;
+    problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[]; heardAs?: string }>;
+  };
+};
+
 export default function UnitPage() {
   const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([]);
   const [transcripts, setTranscripts] = useState<Record<string, string>>({});
-  const [feedbacks, setFeedbacks] = useState<
-    Record<
-      string,
-      {
-        scoreOverall?: number;
-        performanceLabel?: string;
-        scores?: {
-          taskCompletion: number;
-          elaboration: number;
-          coherence: number;
-          grammar: number;
-          vocabulary: number;
-        };
-        corrections?: {
-          original: string;
-          corrected: string;
-          explanation: string;
-        }[];
-        vocabularyTip?: string;
-        stretchSuggestion?: string;
-        strength?: string;
-        pronunciationData?: {
-          overallScore: number;
-          fluencyScore?: number;
-          problemWords: Array<{ word: string; score: number; ipa?: string; problemPhonemes?: string[]; heardAs?: string }>;
-        };
-      }
-    >
-  >({});
+  const [feedbacks, setFeedbacks] = useState<Record<string, FeedbackData>>({});
 
   const tasks = useMemo(
     () => [...unit1.tasks].sort((a, b) => a.orderIndex - b.orderIndex),
@@ -50,7 +52,7 @@ export default function UnitPage() {
     taskId: string,
     _isRetry?: boolean,
     transcript?: string,
-    feedback?: (typeof feedbacks)[string]
+    feedback?: FeedbackData
   ) => {
     setCompletedTaskIds((prev) => (prev.includes(taskId) ? prev : [...prev, taskId]));
     setTranscripts((prev) => ({
@@ -118,6 +120,7 @@ export default function UnitPage() {
                 <FeedbackCard
                   taskId={task.id}
                   taskTitle={task.title}
+                  taskType={task.taskType}
                   transcript={transcripts[task.id]}
                   scoreOverall={feedbacks[task.id]?.scoreOverall}
                   performanceLabel={feedbacks[task.id]?.performanceLabel}
@@ -140,4 +143,3 @@ export default function UnitPage() {
     </main>
   );
 }
-

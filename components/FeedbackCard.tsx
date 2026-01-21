@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import FeedbackChat from "./FeedbackChat";
+import type { Task } from "@/data/unit1";
 
 interface PronunciationData {
   overallScore: number;
@@ -32,17 +33,54 @@ function getFluencyLabel(score: number): { label: string; isGood: boolean } {
   return { label: "Work on your flow", isGood: false };
 }
 
+// Criteria configuration per task type
+const taskCriteriaConfig: Record<Task["taskType"], {
+  criteria: string[];
+  scoreKeys: string[];
+}> = {
+  qa: {
+    criteria: ["Task Achievement", "Elaboration", "Range", "Accuracy"],
+    scoreKeys: ["taskCompletion", "elaboration", "vocabulary", "grammar"],
+  },
+  long_talk: {
+    criteria: ["Task Achievement", "Elaboration", "Cohesion", "Range", "Accuracy"],
+    scoreKeys: ["taskCompletion", "elaboration", "coherence", "vocabulary", "grammar"],
+  },
+  mediation: {
+    criteria: ["Task Achievement", "Comprehension", "Cohesion", "Range", "Accuracy"],
+    scoreKeys: ["taskCompletion", "comprehension", "coherence", "vocabulary", "grammar"],
+  },
+  image: {
+    criteria: ["Task Achievement", "Elaboration", "Cohesion", "Range", "Accuracy"],
+    scoreKeys: ["taskCompletion", "elaboration", "coherence", "vocabulary", "grammar"],
+  },
+  this_or_that: {
+    criteria: ["Task Achievement", "Elaboration", "Fluency", "Range", "Accuracy"],
+    scoreKeys: ["taskCompletion", "elaboration", "fluency", "vocabulary", "grammar"],
+  },
+  gateway: {
+    criteria: ["Task Achievement", "Elaboration", "Cohesion", "Range", "Accuracy"],
+    scoreKeys: ["taskCompletion", "elaboration", "coherence", "vocabulary", "grammar"],
+  },
+};
+
+// Flexible scores type - all optional since different task types return different keys
+type FeedbackScores = {
+  taskCompletion?: number;
+  elaboration?: number;
+  coherence?: number;      // long_talk, image, gateway
+  comprehension?: number;  // mediation
+  fluency?: number;        // this_or_that
+  grammar?: number;
+  vocabulary?: number;
+};
+
 type FeedbackCardProps = {
   taskId: string;
   taskTitle: string;
+  taskType: Task["taskType"];
   transcript?: string;
-  scores?: {
-    taskCompletion: number;
-    elaboration: number;
-    coherence: number;
-    grammar: number;
-    vocabulary: number;
-  };
+  scores?: FeedbackScores;
   scoreOverall?: number;
   performanceLabel?: string;
   corrections?: {
@@ -59,6 +97,7 @@ type FeedbackCardProps = {
 export default function FeedbackCard({
   taskId,
   taskTitle,
+  taskType,
   transcript,
   scoreOverall,
   performanceLabel,
@@ -92,6 +131,26 @@ export default function FeedbackCard({
       setPlayingWord(null);
     }
   };
+
+  // Get the criteria config for this task type
+  console.log("[FeedbackCard] taskType received:", taskType);
+  const config = taskCriteriaConfig[taskType] || taskCriteriaConfig.long_talk;
+  console.log("[FeedbackCard] Using config:", config.criteria);
+
+  // Build the score items to display based on task type
+  const getScoreItems = () => {
+    if (!scores) return [];
+    
+    return config.criteria.map((label, index) => {
+      const key = config.scoreKeys[index] as keyof FeedbackScores;
+      return {
+        label,
+        value: scores[key] ?? 0,
+      };
+    });
+  };
+
+  const scoreItems = getScoreItems();
 
   return (
     <div
@@ -191,7 +250,7 @@ export default function FeedbackCard({
             </div>
           </div>
 
-          {scores ? (
+          {scores && scoreItems.length > 0 && (
             <div
               style={{
                 display: "grid",
@@ -199,13 +258,7 @@ export default function FeedbackCard({
                 gap: "0.5rem",
               }}
             >
-              {[
-                { label: "Task Completion", value: scores.taskCompletion },
-                { label: "Elaboration", value: scores.elaboration },
-                { label: "Coherence", value: scores.coherence },
-                { label: "Grammar", value: scores.grammar },
-                { label: "Vocabulary", value: scores.vocabulary },
-              ].map((item) => (
+              {scoreItems.map((item) => (
                 <div
                   key={item.label}
                   style={{
@@ -218,13 +271,19 @@ export default function FeedbackCard({
                     gap: "0.2rem",
                   }}
                 >
-                  <div style={{ color: "#9f8fc0", fontSize: "0.9rem" }}>{item.label}</div>
-                  <div style={{ fontWeight: 700, color: "#e9e4f0" }}>{item.value}/5</div>
+                  <div style={{ color: "#9f8fc0", fontSize: "0.85rem" }}>{item.label}</div>
+                  <div
+                    style={{
+                      color: "#e9e4f0",
+                      fontWeight: 700,
+                      fontSize: "1.1rem",
+                    }}
+                  >
+                    {item.value}/5
+                  </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div style={{ color: "#9f8fc0" }}>No feedback available yet.</div>
           )}
 
           {corrections && corrections.length > 0 && (
@@ -431,6 +490,7 @@ export default function FeedbackCard({
           {/* Chat with coach */}
           {scores && transcript && (
             <FeedbackChat
+              taskType={taskType}
               feedbackContext={{
                 transcript: transcript || "",
                 taskTitle: taskTitle,

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import type { Task } from "@/data/unit1";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -18,7 +19,9 @@ interface FeedbackContext {
   scores: {
     taskCompletion: number;
     elaboration: number;
-    coherence: number;
+    coherence?: number;
+    comprehension?: number;
+    fluency?: number;
     grammar: number;
     vocabulary: number;
   };
@@ -42,6 +45,7 @@ interface FeedbackContext {
 }
 
 interface FeedbackChatProps {
+  taskType: Task["taskType"];
   feedbackContext: FeedbackContext;
 }
 
@@ -51,7 +55,7 @@ const STARTER_QUESTIONS = [
   "Explain corrections",
 ];
 
-export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
+export default function FeedbackChat({ taskType, feedbackContext }: FeedbackChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -117,6 +121,7 @@ export default function FeedbackChat({ feedbackContext }: FeedbackChatProps) {
         body: JSON.stringify({
           message: messageText,
           conversationHistory: messages,
+          taskType,
           feedbackContext,
         }),
       });
